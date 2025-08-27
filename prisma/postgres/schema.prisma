@@ -1,0 +1,2859 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../../prisma-outputs/postgres-client"
+  binaryTargets   = ["native", "debian-openssl-1.1.x"]
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model Audits {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  ip           String? @db.VarChar(100)
+  url          String? @db.Text()
+  entity       String? @db.VarChar(100)
+  method       String? @db.VarChar(50)
+  event        String? @db.VarChar(250)
+  userAgent    String? @db.Text()
+  params       String? @db.Text()
+  query        String? @db.Text()
+  body         String? @db.Text()
+  headers      String? @db.Text()
+  responseData String? @db.Text()
+
+  // timestamps
+  createdAt DateTime @default(now())
+
+  // relationships
+  userUuid String? @db.Uuid
+  user     Users?  @relation(fields: [userUuid], references: [uuid])
+
+  @@index([entity, createdAt])
+  @@index([method, createdAt])
+  @@index([userUuid, createdAt])
+  @@map("audits")
+}
+
+model ErrorLogs {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  statusCode Int?    @db.Integer()
+  error      String? @db.Text()
+  message    String? @db.Text()
+  url        String? @db.Text()
+  headers    String? @db.Text()
+  method     String? @db.VarChar(50)
+  request    String? @db.Text()
+
+  // timestamps 
+  createdAt DateTime @default(now())
+
+  // relationships
+  userUuid String? @db.Uuid
+  user     Users?  @relation(fields: [userUuid], references: [uuid])
+
+  @@index([statusCode, createdAt])
+  @@index([method, createdAt])
+  @@map("errorLogs")
+}
+
+enum ApplicationType {
+  fixed // fixed amount in R$
+  perSquare // R$/m² (per square meter)
+  percent // percentage over the base value
+  onRequest // request amount in R$
+}
+
+// Beneficiamentos
+model Finishings {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  id   Int?
+  code String?
+
+  category        String?          @db.VarChar(250)
+  description     String?          @db.Text()
+  applicationType ApplicationType?
+  baseCost        Float?           @default(0)
+  wholesaleCost   Float?           @default(0)
+  retailCost      Float?           @default(0)
+  projectCost     Float?           @default(0)
+
+  observation String? @db.Text()
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamentos com itens de orçamento
+  orcamentoBeneficiamentos OrcamentoItemBeneficiamento[]
+  ordersBeneficiamentos    OrderItemBeneficiamento[]
+
+  @@map("finishings")
+}
+
+enum ApplicationMethod {
+  currency // fixed amount in R$
+  percent // percentage over the base cost
+  onRequest // request amount in R$
+}
+
+// Ferragens
+model Fittings {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  id   Int?
+  code String?
+
+  name              String?            @db.VarChar(100)
+  category          String?            @db.VarChar(50)
+  cost              Float?             @default(0)
+  salePrice         Float?             @default(0)
+  applicationMethod ApplicationMethod?
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamentos com itens de orçamento
+  orcamentoFerragens OrcamentoItemFerragemVidro[]
+  ordersFerragens    OrderItemFerragemVidro[]
+
+  @@map("fittings")
+}
+
+model GlassPricings {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  id Int?
+
+  code                     String?
+  glassType                String? @db.VarChar(100)
+  thickness                String? @db.VarChar(50)
+  lossPercent              Float?  @default(0)
+  factoryCost              Float?
+  taxValue                 Float?
+  freightPercent           Float?  @default(0)
+  adminCost                Float?  @default(0)
+  modelCost                Float?
+  marginPercent            Float?  @default(0)
+  representativeCommission Float?  @default(10)
+  salePrice                Float?
+  minPrice                 Float?
+
+  // IDSUBGRUPOPROD                  Int?
+  idSubgroupProd Int?
+
+  isSpecial   Boolean? @default(false)
+  isLaminated Boolean? @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([glassType])
+  @@index([isSpecial])
+  @@index([createdAt])
+  @@map("glassPricings")
+}
+
+enum FinishingsType {
+  percent // % sobre valor
+  perSquare // R$/m²
+  fixed // valor fixo em R$
+  onRequest // valor por solicitação em R$
+}
+
+model PricingGlobalSettings {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  defaultMarginPercent  Float? @default(20)
+  maxDiscountPercent    Float? @default(12)
+  defaultFreightPercent Float? @default(5)
+  lossPercent           Float? @default(10)
+
+  urgentValue Float?  @default(0)
+  urgentType  String? @db.VarChar(50) // percent or fixed
+
+  icms      Float? @default(12)
+  ipi       Float? @default(6.5)
+  pisCofins Float? @default(0)
+
+  finishings   GlassFinishings[]
+  specialTypes GlassSpecialTypes[]
+  typeMargins  GlassTypeMargins[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamentos com orçamentos
+  orcamentos Orcamento[]
+  orders     Order[]
+
+  @@map("pricingGlobalSettings")
+}
+
+model GlassFinishings {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  name      String?         @db.VarChar(100)
+  type      FinishingsType?
+  value     Float?
+  isSpecial Boolean?        @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  pricingGlobalSettingUuid String?                @db.Uuid
+  pricingGlobalSetting     PricingGlobalSettings? @relation(fields: [pricingGlobalSettingUuid], references: [uuid])
+
+  @@map("glassFinishings")
+}
+
+model GlassSpecialTypes {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  name      String?  @db.VarChar(100)
+  isEnabled Boolean? @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  pricingGlobalSettingUuid String?                @db.Uuid
+  pricingGlobalSetting     PricingGlobalSettings? @relation(fields: [pricingGlobalSettingUuid], references: [uuid])
+
+  @@map("glassSpecialTypes")
+}
+
+model GlassTypeMargins {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  glassType String? @db.VarChar(100)
+  minMargin Float?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  pricingGlobalSettingUuid String?                @db.Uuid
+  pricingGlobalSetting     PricingGlobalSettings? @relation(fields: [pricingGlobalSettingUuid], references: [uuid])
+
+  @@map("glassTypeMargins")
+}
+
+enum UserType {
+  superAdmin
+  admin
+  representative
+  collaborator
+  typist
+  pcp
+}
+
+model Users {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  name     String?   @db.VarChar(250)
+  email    String?   @unique @db.VarChar(250)
+  password String?   @db.Text()
+  role     Int?      @default(131) @db.Integer
+  type     UserType? @default(representative)
+  active   Boolean?  @default(true)
+
+  IDFUNC Int? @db.Integer()
+
+  profileImage String? @db.Text()
+
+  refreshToken String? @db.Text()
+
+  defaultUser Boolean? @default(false)
+
+  skipInitialization Boolean? @default(false)
+
+  // Campos extras para representantes
+  code               String? @unique @db.VarChar(50)
+  documentNumber     String? @unique @db.VarChar(30)
+  phoneNumber        String? @db.VarChar(30)
+  region             String? @db.VarChar(100)
+  representativeType String? @db.VarChar(30)
+  observations       String? @db.Text()
+
+  // timestamps 
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // relations
+  audits    Audits[]
+  errorLogs ErrorLogs[]
+
+  // Relacionamentos com orçamentos
+  orcamentosCriacao       Orcamento[]          @relation("OrcamentoCriacao")
+  orcamentosAtualizacao   Orcamento[]          @relation("OrcamentoAtualizacao")
+  orcamentosRepresentante Orcamento[]          @relation("OrcamentoRepresentante")
+  orcamentoHistorico      OrcamentoHistorico[]
+
+  // Relacionamentos com orders
+  ordersCriacao       Order[]          @relation("OrderCriacao")
+  ordersAtualizacao   Order[]          @relation("OrderAtualizacao")
+  ordersRepresentante Order[]          @relation("OrderRepresentante")
+  ordersTypist        Order[]          @relation("OrderTypist")
+  orderHistorico      OrderHistorico[]
+
+  storageUuid String?  @db.Uuid
+  storage     Storage? @relation(name: "UserProfileImage", fields: [storageUuid], references: [uuid])
+
+  // Relacionamentos de grupos
+  gruposComoMembro        UserGroupMember[]         @relation("UserGroupMember")
+  gruposComoRepresentante UserGroupRepresentative[] @relation("UserGroupRepresentative")
+  arquivosUpload          OrderArquivo[]            @relation("OrderArquivoUpload")
+
+  // Relacionamentos de chat
+  chatGroupsComoMembro  ChatGroupMember[]
+  chatGroupsComoCriador ChatGroup[]        @relation("ChatGroupCriador")
+  chatMessages          ChatMessage[]
+  Comunicacao           Comunicacao[]
+  ComunicacaoLida       ComunicacaoLida[]
+  chatMessageReads      ChatMessageReads[]
+  Notification          Notification[]
+
+  @@index([role])
+  @@index([type])
+  @@index([active])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// Grupos de usuários com relacionamentos N-to-N para membros e representantes
+model UserGroups {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Nome do grupo
+  name        String? @db.VarChar(100)
+  description String? @db.Text
+
+  // Status do grupo
+  active Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamentos com membros e representantes
+  members         UserGroupMember[]
+  representatives UserGroupRepresentative[]
+
+  @@index([name])
+  @@index([active])
+  @@index([createdAt])
+  @@map("user_groups")
+}
+
+// Tabela intermediária para relacionar grupos com membros
+model UserGroupMember {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao grupo
+  userGroupUuid String     @db.Uuid
+  userGroup     UserGroups @relation(fields: [userGroupUuid], references: [uuid], onDelete: Cascade)
+
+  // Referência ao membro (digitador/typist)
+  memberUuid String @db.Uuid
+  member     Users  @relation("UserGroupMember", fields: [memberUuid], references: [uuid], onDelete: Cascade)
+
+  // Status do relacionamento
+  active Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userGroupUuid, memberUuid])
+  @@index([userGroupUuid])
+  @@index([memberUuid])
+  @@index([active])
+  @@index([createdAt])
+  @@map("user_group_members")
+}
+
+// Tabela intermediária para relacionar grupos com representantes
+model UserGroupRepresentative {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao grupo
+  userGroupUuid String     @db.Uuid
+  userGroup     UserGroups @relation(fields: [userGroupUuid], references: [uuid], onDelete: Cascade)
+
+  // Referência ao representante
+  representativeUuid String @db.Uuid
+  representative     Users  @relation("UserGroupRepresentative", fields: [representativeUuid], references: [uuid], onDelete: Cascade)
+
+  // Status do relacionamento
+  active Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userGroupUuid, representativeUuid])
+  @@index([userGroupUuid])
+  @@index([representativeUuid])
+  @@index([active])
+  @@index([createdAt])
+  @@map("user_group_representatives")
+}
+
+model Storage {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  name     String  @db.Text()
+  key      String  @db.Text()
+  mimetype String? @db.VarChar(200)
+  type     String? @db.VarChar(200)
+  url      String? @db.Text()
+
+  // timestamps 
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // relationships
+  users Users[] @relation("UserProfileImage")
+
+  @@index([name])
+  @@map("storage")
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
+enum ImportStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model ImportLogs {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  modelName   String       @db.VarChar(100)
+  initialDate DateTime     @default(now())
+  finalDate   DateTime?
+  status      ImportStatus @default(PENDING)
+  error       String?      @db.Text
+
+  batchSize      Int?
+  processedCount Int?
+  insertedCount  Int?
+  updatedCount   Int?
+  details        Json?
+
+  @@index([modelName])
+  @@index([initialDate])
+  @@index([status])
+  @@map("importLogs")
+}
+
+model InitialBulkMeta {
+  modelName String @id
+  lastId    BigInt @default(0)
+
+  @@index([modelName])
+  @@map("initialBulkMeta")
+}
+
+model DeltaSyncMeta {
+  modelName String   @id
+  lastSync  DateTime @default("1970-01-01T00:00:00Z")
+
+  @@index([modelName])
+  @@map("deltaSyncMeta")
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
+// Entidades para Orçamentos
+enum OrcamentoTipo {
+  vidros
+  ferragens
+}
+
+enum OrcamentoStatus {
+  rascunho
+  enviado
+  aprovado
+  rejeitado
+  cancelado
+}
+
+enum TipoEntrega {
+  balcao
+  obra
+  entrega
+}
+
+enum TipoVidro {
+  simples
+  composto
+}
+
+// Orçamento principal
+model Orcamento {
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid()) @db.Uuid
+
+  // Informações básicas
+  codigo          String?         @db.VarChar(50)
+  tipo            OrcamentoTipo   @default(vidros)
+  status          OrcamentoStatus @default(rascunho)
+  valorReferencia TipoEntrega     @default(balcao)
+
+  // Totais
+  urgente                  Boolean  @default(false)
+  percentualUrgente        Float?   @default(0)
+  valorTotalWithoutUrgency Decimal? @db.Decimal(12, 2)
+  valorTotal               Decimal? @db.Decimal(12, 2)
+  metrosQuadradosTotal     Decimal? @db.Decimal(10, 4)
+  totalItens               Int?     @default(0)
+
+  // Configurações globais aplicadas
+  globalSettingsUuid String?                @db.Uuid
+  globalSettings     PricingGlobalSettings? @relation(fields: [globalSettingsUuid], references: [uuid])
+
+  // Observações
+  observacoes String? @db.Text
+
+  pedidoCriado Boolean? @default(false)
+
+  // PDF URL
+  pdfUrl String? @db.Text()
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamentos
+  clienteUuid String?           @db.Uuid
+  cliente     ClienteOrcamento? @relation(fields: [clienteUuid], references: [uuid])
+
+  representanteUuid String? @db.Uuid
+  representante     Users?  @relation("OrcamentoRepresentante", fields: [representanteUuid], references: [uuid])
+
+  usuarioCriacaoUuid String? @db.Uuid
+  usuarioCriacao     Users?  @relation("OrcamentoCriacao", fields: [usuarioCriacaoUuid], references: [uuid])
+
+  usuarioAtualizacaoUuid String? @db.Uuid
+  usuarioAtualizacao     Users?  @relation("OrcamentoAtualizacao", fields: [usuarioAtualizacaoUuid], references: [uuid])
+
+  // Itens do orçamento
+  itensVidros    OrcamentoItemVidro[]
+  itensFerragens OrcamentoItemFerragem[]
+  historico      OrcamentoHistorico[]
+
+  @@index([tipo])
+  @@index([status])
+  @@index([urgente])
+  @@index([createdAt])
+  @@index([clienteUuid])
+  @@index([usuarioCriacaoUuid])
+  @@map("orcamentos")
+}
+
+// Cliente do orçamento (pode ser diferente do cliente cadastrado)
+model ClienteOrcamento {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Dados básicos
+  codigo      String?     @db.VarChar(50)
+  nome        String?     @db.VarChar(250)
+  tipoEntrega TipoEntrega @default(balcao)
+  telefone    String?     @db.VarChar(20)
+
+  // Endereço
+  enderecoRua         String? @db.VarChar(250)
+  enderecoNumero      String? @db.VarChar(20)
+  enderecoBairro      String? @db.VarChar(100)
+  enderecoCidade      String? @db.VarChar(100)
+  enderecoUf          String? @db.Char(2)
+  enderecoCep         String? @db.VarChar(10)
+  enderecoComplemento String? @db.VarChar(100)
+
+  nomeFantasia String? @db.VarChar(250)
+  razaoSocial  String? @db.VarChar(250)
+  cnpj         String? @db.VarChar(20)
+  email        String? @db.VarChar(250)
+
+  // Referência ao cliente cadastrado (opcional)
+  clienteId Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  orcamentos Orcamento[]
+
+  @@index([nome])
+  @@index([clienteId])
+  @@map("clientes_orcamento")
+}
+
+// Item de vidro do orçamento
+model OrcamentoItemVidro {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao orçamento
+  orcamentoUuid String    @db.Uuid
+  orcamento     Orcamento @relation(fields: [orcamentoUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados do vidro
+  codigo      String?  @db.VarChar(250)
+  vidro       String?  @db.VarChar(200)
+  espessura   String?  @db.VarChar(20)
+  altura      Int? // em mm
+  largura     Int? // em mm
+  m2Calculado Decimal? @db.Decimal(10, 4)
+  perda       String?  @db.VarChar(50)
+
+  // Vidro composto
+  isComposto Boolean @default(false)
+
+  codigoSecundario    String? @db.VarChar(200)
+  vidroSecundario     String? @db.VarChar(200)
+  espessuraSecundario String? @db.VarChar(20)
+  perdaSecundario     String? @db.VarChar(50)
+
+  // Quantidade e preços
+  quantidade       Int      @default(1)
+  precoUnitario    Decimal? @db.Decimal(12, 4)
+  descontoAplicado Decimal? @db.Decimal(5, 2) // percentual
+  precoFinal       Decimal? @db.Decimal(12, 2)
+
+  // Preços do vidro secundário
+  precoUnitarioSecundario    Decimal? @db.Decimal(12, 4)
+  descontoAplicadoSecundario Decimal? @db.Decimal(5, 2)
+
+  // Valores de referência
+  valorBalcao           Decimal? @db.Decimal(12, 4)
+  valorObra             Decimal? @db.Decimal(12, 4)
+  valorBalcaoSecundario Decimal? @db.Decimal(12, 4)
+  valorObraSecundario   Decimal? @db.Decimal(12, 4)
+
+  // Informações adicionais
+  local      String? @db.VarChar(200)
+  observacao String? @db.Text
+
+  // Ordem de exibição
+  ordem Int @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  beneficiamentos OrcamentoItemBeneficiamento[]
+  ferragens       OrcamentoItemFerragemVidro[]
+
+  @@index([orcamentoUuid])
+  @@index([isComposto])
+  @@map("orcamento_itens_vidro")
+}
+
+// Item de ferragem/kitbox do orçamento
+model OrcamentoItemFerragem {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao orçamento
+  orcamentoUuid String    @db.Uuid
+  orcamento     Orcamento @relation(fields: [orcamentoUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados do produto
+  produto   String? @db.VarChar(100) // código
+  descricao String? @db.VarChar(300)
+  categoria String? @db.VarChar(100)
+  tipo      String? @db.VarChar(50) // 'ferragem' ou 'kitbox'
+
+  // Quantidade e preços
+  quantidade       Int      @default(1)
+  precoUnitario    Decimal? @db.Decimal(12, 4)
+  descontoAplicado Decimal? @db.Decimal(5, 2)
+  precoFinal       Decimal? @db.Decimal(12, 2)
+
+  // Ordem de exibição
+  ordem Int @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orcamentoUuid])
+  @@index([tipo])
+  @@map("orcamento_itens_ferragem")
+}
+
+// Beneficiamentos aplicados aos itens de vidro
+model OrcamentoItemBeneficiamento {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao item de vidro
+  itemVidroUuid String             @db.Uuid
+  itemVidro     OrcamentoItemVidro @relation(fields: [itemVidroUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados do beneficiamento
+  nome        String?  @db.VarChar(200)
+  descricao   String?  @db.VarChar(300)
+  tipoCalculo Int? // 1 = por m², 2 = valor fixo
+  valorBalcao Decimal? @db.Decimal(12, 4)
+  valorObra   Decimal? @db.Decimal(12, 4)
+
+  // Referência ao beneficiamento cadastrado (opcional)
+  beneficiamentoUuid String?     @db.Uuid
+  beneficiamento     Finishings? @relation(fields: [beneficiamentoUuid], references: [uuid])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([itemVidroUuid])
+  @@index([beneficiamentoUuid])
+  @@map("orcamento_itens_beneficiamentos")
+}
+
+// Ferragens aplicadas aos itens de vidro
+model OrcamentoItemFerragemVidro {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao item de vidro
+  itemVidroUuid String             @db.Uuid
+  itemVidro     OrcamentoItemVidro @relation(fields: [itemVidroUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados da ferragem
+  codigo      String?  @db.VarChar(100)
+  descricao   String?  @db.VarChar(300)
+  categoria   String?  @db.VarChar(100)
+  valorBalcao Decimal? @db.Decimal(12, 4)
+  valorObra   Decimal? @db.Decimal(12, 4)
+
+  // Referência à ferragem cadastrada (opcional)
+  ferragemUuid String?   @db.Uuid
+  ferragem     Fittings? @relation(fields: [ferragemUuid], references: [uuid])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([itemVidroUuid])
+  @@index([ferragemUuid])
+  @@map("orcamento_itens_ferragens_vidro")
+}
+
+// Histórico de alterações do orçamento
+model OrcamentoHistorico {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao orçamento
+  orcamentoUuid String    @db.Uuid
+  orcamento     Orcamento @relation(fields: [orcamentoUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados da alteração
+  acao            String? @db.VarChar(100) // 'criado', 'alterado', 'enviado', 'aprovado', etc.
+  descricao       String? @db.Text
+  dadosAnteriores Json? // dados antes da alteração
+  dadosNovos      Json? // dados após a alteração
+
+  // Usuário que fez a alteração
+  usuarioUuid String? @db.Uuid
+  usuario     Users?  @relation(fields: [usuarioUuid], references: [uuid])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([orcamentoUuid])
+  @@index([acao])
+  @@index([usuarioUuid])
+  @@index([createdAt])
+  @@map("orcamento_historico")
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
+// Entidades para Orders
+enum OrderTipo {
+  simples
+  projeto
+}
+
+enum OrderStatus {
+  rascunho
+  enviado
+  aprovado
+  em_producao
+  pronto
+  entregue
+  cancelado
+  pendente
+  digitando
+  em_conferencia
+  conferido
+  finalizado
+}
+
+// Ativo - 1
+// Ativo/Em Conferência - 2
+// Importando - 11
+// Conferido COM - 4
+// Cancelado - 6
+// Confirmado PCP - 7
+// Liberado Parcialmente - 8
+// Liberado - 5
+// Aguardando Finalização Financeiro - 9
+// Aguardando Confirmação Financeiro - 10
+enum OrderSituacao {
+  ativo
+  ativo_em_conferncia
+  importando
+  conferido_com
+  cancelado
+  confirmado_pcp
+  liberado_parcialmente
+  liberado
+  aguardando_finalizacao_financeiro
+  aguardando_confirmacao_financeiro
+}
+
+// Etiqueta não impressa - 1
+// Pendente - 2
+// Pronto - 3
+// Entregue - 4
+enum OrderSituacaoProducao {
+  etiqueta_nao_impressa
+  pendente
+  pronto
+  entregue
+}
+
+enum OrderTipoEntrega {
+  balcao
+  obra
+  entrega
+  outro
+}
+
+// Order principal
+model Order {
+  // id   Int    @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid()) @db.Uuid
+
+  idWebGlass Int?
+
+  // Informações básicas
+  codigo           String?               @db.VarChar(50)
+  tipo             OrderTipo             @default(simples)
+  status           OrderStatus           @default(pendente)
+  situacao         OrderSituacao         @default(ativo)
+  situacaoProducao OrderSituacaoProducao @default(etiqueta_nao_impressa)
+  tipoEntrega      OrderTipoEntrega      @default(balcao)
+
+  // Data do pedido
+  dataPedido DateTime? @db.Date
+
+  // Descrição do projeto (para pedidos do tipo projeto)
+  descricaoProjeto String? @db.Text
+
+  // Totais
+  urgente                  Boolean  @default(false)
+  percentualUrgente        Float?   @default(0)
+  valorTotalWithoutUrgency Decimal? @db.Decimal(12, 2)
+  valorTotal               Decimal? @db.Decimal(12, 2)
+  metrosQuadradosTotal     Decimal? @db.Decimal(10, 4)
+  totalItens               Int?     @default(0)
+
+  // Configurações globais aplicadas
+  globalSettingsUuid String?                @db.Uuid
+  globalSettings     PricingGlobalSettings? @relation(fields: [globalSettingsUuid], references: [uuid])
+
+  // Observações
+  observacoes String? @db.Text
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamentos
+  clienteId   Int?
+  clienteUuid String?       @db.Uuid
+  cliente     ClienteOrder? @relation(fields: [clienteUuid], references: [uuid])
+
+  representanteId   Int?
+  representanteUuid String? @db.Uuid
+  representante     Users?  @relation("OrderRepresentante", fields: [representanteUuid], references: [uuid])
+
+  tipoVenda     Int?
+  tipoVendaName String?
+
+  idFormaPagamento   Int?
+  formaPagamentoName String?
+
+  tipoPedido     Int?
+  tipoPedidoName String?
+
+  subtipoPedido     Int?
+  subtipoPedidoName String?
+
+  tipoEntregaId   Int?
+  tipoEntregaName String?
+
+  idTransportador   Int?
+  transportadorName String?
+
+  codigoPedidoCliente String?
+
+  idOrcamento Int?
+
+  observacao          String? @db.Text
+  observacaoLiberacao String? @db.Text
+
+  typistUuid String? @db.Uuid
+  typist     Users?  @relation("OrderTypist", fields: [typistUuid], references: [uuid])
+
+  usuarioCriacaoUuid String? @db.Uuid
+  usuarioCriacao     Users?  @relation("OrderCriacao", fields: [usuarioCriacaoUuid], references: [uuid])
+
+  usuarioAtualizacaoUuid String? @db.Uuid
+  usuarioAtualizacao     Users?  @relation("OrderAtualizacao", fields: [usuarioAtualizacaoUuid], references: [uuid])
+
+  // Itens do order
+  itensVidros    OrderItemVidro[]
+  itensFerragens OrderItemFerragem[]
+  historico      OrderHistorico[]
+  arquivos       OrderArquivo[]
+
+  @@index([tipo])
+  @@index([status])
+  @@index([urgente])
+  @@index([createdAt])
+  @@index([clienteUuid])
+  @@index([usuarioCriacaoUuid])
+  @@index([representanteUuid])
+  @@index([dataPedido])
+  @@map("orders")
+}
+
+// Cliente do order (pode ser diferente do cliente cadastrado)
+model ClienteOrder {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Dados básicos
+  codigo      String?          @db.VarChar(50)
+  nome        String?          @db.VarChar(250)
+  tipoEntrega OrderTipoEntrega @default(balcao)
+  telefone    String?          @db.VarChar(20)
+
+  // Endereço
+  enderecoRua         String? @db.VarChar(250)
+  enderecoNumero      String? @db.VarChar(20)
+  enderecoBairro      String? @db.VarChar(100)
+  enderecoCidade      String? @db.VarChar(100)
+  enderecoUf          String? @db.Char(2)
+  enderecoCep         String? @db.VarChar(10)
+  enderecoComplemento String? @db.VarChar(100)
+
+  // Referência ao cliente cadastrado (opcional)
+  clienteId Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  orders Order[]
+
+  @@index([nome])
+  @@index([clienteId])
+  @@map("clientes_order")
+}
+
+// Item de vidro do order
+model OrderItemVidro {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao order
+  orderUuid String @db.Uuid
+  order     Order  @relation(fields: [orderUuid], references: [uuid], onDelete: Cascade)
+
+  ambiente String? @db.Text
+
+  // Dados do vidro
+  vidro       String?  @db.VarChar(200)
+  espessura   String?  @db.VarChar(20)
+  altura      Int? // em mm
+  largura     Int? // em mm
+  m2Calculado Decimal? @db.Decimal(10, 4)
+  perda       String?  @db.VarChar(50)
+
+  // Vidro composto
+  isComposto          Boolean @default(false)
+  vidroSecundario     String? @db.VarChar(200)
+  espessuraSecundario String? @db.VarChar(20)
+  perdaSecundario     String? @db.VarChar(50)
+
+  // Quantidade e preços
+  quantidade       Int      @default(1)
+  precoUnitario    Decimal? @db.Decimal(12, 4)
+  descontoAplicado Decimal? @db.Decimal(5, 2) // percentual
+  precoFinal       Decimal? @db.Decimal(12, 2)
+
+  // Preços do vidro secundário
+  precoUnitarioSecundario    Decimal? @db.Decimal(12, 4)
+  descontoAplicadoSecundario Decimal? @db.Decimal(5, 2)
+
+  // Valores de referência
+  valorBalcao           Decimal? @db.Decimal(12, 4)
+  valorObra             Decimal? @db.Decimal(12, 4)
+  valorBalcaoSecundario Decimal? @db.Decimal(12, 4)
+  valorObraSecundario   Decimal? @db.Decimal(12, 4)
+
+  // Informações adicionais
+  local      String? @db.VarChar(200)
+  observacao String? @db.Text
+
+  // Ordem de exibição
+  ordem Int @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  beneficiamentos OrderItemBeneficiamento[]
+  ferragens       OrderItemFerragemVidro[]
+
+  @@index([orderUuid])
+  @@index([isComposto])
+  @@map("order_itens_vidro")
+}
+
+// Item de ferragem/kitbox do order
+model OrderItemFerragem {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao order
+  orderUuid String @db.Uuid
+  order     Order  @relation(fields: [orderUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados do produto
+  produto   String? @db.VarChar(100) // código
+  descricao String? @db.VarChar(300)
+  categoria String? @db.VarChar(100)
+  tipo      String? @db.VarChar(50) // 'ferragem' ou 'kitbox'
+
+  // Quantidade e preços
+  quantidade       Int      @default(1)
+  precoUnitario    Decimal? @db.Decimal(12, 4)
+  descontoAplicado Decimal? @db.Decimal(5, 2)
+  precoFinal       Decimal? @db.Decimal(12, 2)
+
+  // Ordem de exibição
+  ordem Int @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderUuid])
+  @@index([tipo])
+  @@map("order_itens_ferragem")
+}
+
+// Beneficiamentos aplicados aos itens de vidro do order
+model OrderItemBeneficiamento {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao item de vidro
+  itemVidroUuid String         @db.Uuid
+  itemVidro     OrderItemVidro @relation(fields: [itemVidroUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados do beneficiamento
+  nome        String?  @db.VarChar(200)
+  descricao   String?  @db.VarChar(300)
+  tipoCalculo Int? // 1 = por m², 2 = valor fixo
+  valorBalcao Decimal? @db.Decimal(12, 4)
+  valorObra   Decimal? @db.Decimal(12, 4)
+
+  beneficiamentoId Int?
+
+  // Referência ao beneficiamento cadastrado (opcional)
+  beneficiamentoUuid String?     @db.Uuid
+  beneficiamento     Finishings? @relation(fields: [beneficiamentoUuid], references: [uuid])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([itemVidroUuid])
+  @@index([beneficiamentoUuid])
+  @@map("order_itens_beneficiamentos")
+}
+
+// Ferragens aplicadas aos itens de vidro do order
+model OrderItemFerragemVidro {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao item de vidro
+  itemVidroUuid String         @db.Uuid
+  itemVidro     OrderItemVidro @relation(fields: [itemVidroUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados da ferragem
+  codigo      String?  @db.VarChar(100)
+  descricao   String?  @db.VarChar(300)
+  categoria   String?  @db.VarChar(100)
+  valorBalcao Decimal? @db.Decimal(12, 4)
+  valorObra   Decimal? @db.Decimal(12, 4)
+
+  // Referência à ferragem cadastrada (opcional)
+  ferragemUuid String?   @db.Uuid
+  ferragem     Fittings? @relation(fields: [ferragemUuid], references: [uuid])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([itemVidroUuid])
+  @@index([ferragemUuid])
+  @@map("order_itens_ferragens_vidro")
+}
+
+// Histórico de alterações do order
+model OrderHistorico {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao order
+  orderUuid String @db.Uuid
+  order     Order  @relation(fields: [orderUuid], references: [uuid], onDelete: Cascade)
+
+  // Dados da alteração
+  acao            String? @db.VarChar(100) // 'criado', 'alterado', 'enviado', 'aprovado', etc.
+  descricao       String? @db.Text
+  dadosAnteriores Json? // dados antes da alteração
+  dadosNovos      Json? // dados após a alteração
+
+  // Usuário que fez a alteração
+  usuarioUuid String? @db.Uuid
+  usuario     Users?  @relation(fields: [usuarioUuid], references: [uuid])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([orderUuid])
+  @@index([acao])
+  @@index([usuarioUuid])
+  @@index([createdAt])
+  @@map("order_historico")
+}
+
+// Arquivos dos pedidos
+model OrderArquivo {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao order
+  orderUuid String @db.Uuid
+  order     Order  @relation(fields: [orderUuid], references: [uuid], onDelete: Cascade)
+
+  // Informações do arquivo
+  nomeOriginal String  @db.VarChar(255) // Nome original do arquivo
+  nomeArquivo  String  @db.VarChar(255) // Nome do arquivo no storage
+  urlDownload  String  @db.Text // URL para download do arquivo
+  tamanho      Int? // Tamanho do arquivo em bytes
+  tipoMime     String? @db.VarChar(100) // Tipo MIME do arquivo
+
+  // Usuário que fez o upload
+  usuarioUploadUuid String? @db.Uuid
+  usuarioUpload     Users?  @relation("OrderArquivoUpload", fields: [usuarioUploadUuid], references: [uuid])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderUuid])
+  @@index([usuarioUploadUuid])
+  @@index([createdAt])
+  @@map("order_arquivos")
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
+model produto_vector {
+  IDPROD Int @id @default(autoincrement())
+
+  embedding Unsupported("vector(1536)")?
+
+  contextText String? @db.Text
+  chunkIndex  Int?
+
+  type String? @db.VarChar(50) // glass, ferragem
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([IDPROD])
+  @@map("produto_vector")
+}
+
+model produto {
+  IDPROD                          Int       @id @default(autoincrement())
+  IDFORNEC                        Int?
+  IDSUBGRUPOPROD                  Int?
+  DESCRICAO                       String?   @db.VarChar(80)
+  custoFabBase                    Decimal?  @db.Decimal(12, 4)
+  custoCompra                     Decimal?  @db.Decimal(12, 4)
+  valorAtacado                    Decimal?  @db.Decimal(12, 4)
+  valorBalcao                     Decimal?  @db.Decimal(12, 4)
+  valorObra                       Decimal?  @db.Decimal(12, 4)
+  DATACAD                         DateTime?
+  USUCAD                          Int?
+  CODINTERNO                      String?   @db.VarChar(50)
+  VALOR_MINIMO                    Decimal?  @db.Decimal(12, 2)
+  VALORTRANSFERENCIA              Decimal?  @db.Decimal(12, 2)
+  ALIQIPI                         Float?
+  ATIVARMIN                       Int?
+  IDGRUPOPROD                     Int?
+  ESPESSURA                       Float?
+  COMPRA                          Boolean?
+  ITEMGENERICO                    Boolean?
+  AREAMINIMA                      Float?
+  ATIVARAREAMINIMA                Boolean?
+  PESO                            Float?
+  CST                             String?   @db.Char(2)
+  NCM                             String?   @db.VarChar(20)
+  VALORREPOSICAO                  Decimal?  @db.Decimal(12, 2)
+  SITUACAO                        Int?
+  DATAALT                         DateTime?
+  USUALT                          Int?
+  OBS                             String?   @db.VarChar(300)
+  CODOTIMIZACAO                   String?   @db.VarChar(30)
+  IDCORVIDRO                      Int?
+  ALTURA                          Int?
+  LARGURA                         Int?
+  CSOSN                           String?   @db.VarChar(3)
+  REDONDO                         Boolean?
+  FORMA                           String?   @db.VarChar(20)
+  IDUNIDADEMEDIDA                 Int?
+  CODIGOEX                        String?   @db.VarChar(10)
+  IDGENEROPRODUTO                 Int?
+  TIPOMERCADORIA                  Int?
+  ALIQICMSST                      Float?
+  CSTIPI                          Int?
+  IDCONTACONTABIL                 Int?
+  IDCORALUMINIO                   Int?
+  IDCORFERRAGEM                   Int?
+  IDARQUIVOMESACORTE              Int?
+  TIPOARQUIVO                     Int?
+  GTINPRODUTO                     String?   @db.VarChar(14)
+  GTINUNIDTRIB                    String?   @db.VarChar(14)
+  IDUNIDADEMEDIDATRIB             Int?
+  IDPROCESSO                      Int?
+  IDAPLICACAO                     Int?
+  VALORFISCAL                     Decimal?  @db.Decimal(12, 2)
+  IDPRODORIG                      Int?
+  IDPRODBASE                      Int?
+  IDCEST                          Int?
+  MARKUP                          Decimal?  @db.Decimal(12, 2)
+  RECORTEX1                       Float?    @default(0)
+  RECORTEY1                       Float?    @default(0)
+  RECORTEX2                       Float?    @default(0)
+  RECORTEY2                       Float?    @default(0)
+  TRANSVERSALMAXX                 Float?    @default(9999)
+  TRANSVERSALMAXY                 Float?    @default(9999)
+  DESPERDICIOMINX                 Float?    @default(0)
+  DESPERDICIOMINY                 Float?    @default(0)
+  DISTANCIAMIN                    Float?    @default(0)
+  RECORTEAUTOMATICOFORMA          Float?    @default(0)
+  ANGULORECORTEAUTOMATICO         Float?    @default(0)
+  CONFIGURARESPESSURASLAMINADO    Boolean?  @default(false)
+  ESPESSURALAMINADO1              Float?    @default(0.00)
+  ESPESSURALAMINADO2              Float?    @default(0.00)
+  ESPESSURALAMINADO3              Float?    @default(0.00)
+  IdSetorControleCapacidadeDiaria Int?
+  DIASMINIMOSDATAPRODUCAO         Int?
+  OBSERVACAOETIQUETA              String?   @db.VarChar(100)
+  IDAPARENCIAPRODUTO              Int?
+  IDTIPOPRODUTO                   Int?
+  TIPOCORTE                       Int?      @default(3)
+  IDMESACORTE                     Int?
+  CodigoInternoFiscal             String?   @db.VarChar(50)
+  DescricaoDetalhada              String?   @db.Text
+  DescricaoTecnica                String?   @db.Text
+  IdMateriaPrimaPintura           Int?
+  PodeRotacionar                  Boolean?  @default(true)
+
+  @@index([IdMateriaPrimaPintura])
+  @@index([CODINTERNO])
+  @@index([IDFORNEC])
+  @@index([IDCORALUMINIO])
+  @@index([IDCORFERRAGEM])
+  @@index([IDUNIDADEMEDIDATRIB])
+  @@index([CODOTIMIZACAO])
+  @@index([DIASMINIMOSDATAPRODUCAO])
+  @@index([IDAPARENCIAPRODUTO])
+  @@index([IDARQUIVOMESACORTE])
+  @@index([IDCONTACONTABIL])
+  @@index([IDCORVIDRO])
+  @@index([IDGENEROPRODUTO])
+  @@index([IDGRUPOPROD])
+  @@index([IDMESACORTE])
+  @@index([IDPRODBASE])
+  @@index([IDPRODORIG])
+  @@index([IDSUBGRUPOPROD])
+  @@index([IDTIPOPRODUTO])
+  @@index([IDUNIDADEMEDIDA])
+  @@index([SITUACAO])
+  @@index([USUALT])
+  @@index([USUCAD])
+}
+
+model grupo_prod {
+  IDGRUPOPROD             Int      @id @default(autoincrement())
+  DESCRICAO               String?  @db.VarChar(35)
+  TIPOCALCULO             Int?
+  BLOQUEARESTOQUE         Boolean?
+  TIPOCALCULONF           Int?
+  NAOALTERARESTOQUEFISCAL Boolean?
+  TipoGrupo               Int?     @default(0)
+  EXIBIRMENSAGEMESTOQUE   Boolean?
+  GeraVolume              Boolean? @default(false)
+  NAOALTERARESTOQUE       Boolean?
+
+  @@index([GeraVolume])
+  @@index([TIPOCALCULO])
+}
+
+model subgrupo_prod {
+  IDSUBGRUPOPROD             Int      @id @default(autoincrement())
+  IDGRUPOPROD                Int?
+  DESCRICAO                  String?  @db.VarChar(35)
+  TIPOCALCULO                Int?
+  BloquearEstoque            Boolean? @default(false)
+  TIPOCALCULONF              Int?
+  NAOALTERARESTOQUEFISCAL    Boolean?
+  PRODUTOSESTOQUE            Boolean?
+  ISVIDROTEMPERADO           Boolean?
+  EXIBIRMENSAGEMESTOQUE      Boolean?
+  NUMERODIASMINIMOENTREGA    Int?
+  DIASEMANAENTREGA           Int?
+  TIPOSUBGRUPO               Int?
+  GeraVolume                 Boolean? @default(false)
+  NAOALTERARESTOQUE          Boolean?
+  IDCLI                      Int?
+  LIBERARPENDENTEPRODUCAO    Boolean?
+  PERMITIRITEMREVENDANAVENDA Boolean?
+  BLOQUEARECOMMERCE          Boolean? @default(false)
+  PODESERCORTADO             Boolean? @default(false)
+  GERARETIQUETA              Boolean? @default(false)
+  ExibirWgTerminal           Int?     @default(0)
+  ArredondarMultiplo5ValorM2 Int?     @default(0)
+  PriorizarOtimizacao        Boolean? @default(false)
+
+  @@index([GERARETIQUETA])
+  @@index([GeraVolume])
+  @@index([IDGRUPOPROD])
+  @@index([PRODUTOSESTOQUE])
+  @@index([TIPOCALCULO])
+  @@index([TIPOSUBGRUPO])
+}
+
+model cor_vidro {
+  IDCORVIDRO                Int      @id @default(autoincrement())
+  DESCRICAO                 String?  @db.VarChar(30)
+  SIGLA                     String?  @db.VarChar(5)
+  NAOEXIBIRECOMMERCE        Boolean? @default(false)
+  NumeroSequencia           Int?     @default(0)
+  NAOGERARMARCACAOMESACORTE Boolean? @default(false)
+}
+
+model unidade_medida {
+  IDUNIDADEMEDIDA Int       @id @default(autoincrement())
+  CODIGO          String?   @db.VarChar(10)
+  DESCRICAO       String?   @db.VarChar(100)
+  DATACAD         DateTime?
+  USUCAD          Int?
+
+  @@index([USUCAD])
+}
+
+model genero_produto {
+  IDGENEROPRODUTO Int     @id @default(autoincrement())
+  CODIGO          String? @db.Char(2)
+  DESCRICAO       String? @db.VarChar(100)
+}
+
+model cor_aluminio {
+  IDCORALUMINIO Int     @id @default(autoincrement())
+  DESCRICAO     String? @db.VarChar(30)
+  SIGLA         String? @db.VarChar(5)
+}
+
+model cor_ferragem {
+  IDCORFERRAGEM Int     @id @default(autoincrement())
+  DESCRICAO     String? @db.VarChar(30)
+  SIGLA         String? @db.VarChar(5)
+}
+
+model arquivo_mesa_corte {
+  idArquivoMesaCorte  Int     @id @default(autoincrement())
+  DESCRICAO           String? @db.VarChar(200)
+  ARQUIVO             String? @db.Text
+  TIPOARQUIVO         Int?
+  IDARQUIVOCALCENGINE Int?
+  TIPOPROJETO         Int?
+}
+
+model mesa_corte {
+  IdMesaCorte                                     Int      @id @default(autoincrement())
+  LinhaCorte                                      String?  @db.VarChar(128)
+  IdModeloMesaCorte                               Int?
+  IdComandoNumericoMesaCorte                      Int?
+  IdUnidadeMedidaMesaCorte                        Int?
+  Tipo                                            Int?
+  DimensaoXMaximaChapa                            Float?
+  DimensaoYMaximaChapa                            Float?
+  XEstacionamento                                 Float?
+  YEstacionamento                                 Float?
+  OffsetX                                         Float?
+  OffsetY                                         Float?
+  DoubleZero                                      Float?
+  BarraSeparacaoX1                                Float?
+  BarraSeparacaoX2                                Float?
+  BarraSeparacaoX3                                Float?
+  BarraSeparacaoY1                                Float?
+  BarraSeparacaoY2                                Float?
+  NiveisCorte                                     Int?
+  PosicaoZero                                     Int?
+  DistanciaSeguraBordaChapa                       Float?
+  DistanciaCortePerpendicular                     Float?
+  TransversalMaximaX                              Float?
+  TransversalMaximaY                              Float?
+  NumeroMaximoTransversaisX                       Int?
+  NumeroMaximoTransversaisY                       Int?
+  AnguloLigacaoMinimo                             Float?
+  AnguloLigacaoMaximo                             Float?
+  OrdemImpressaoEtiquetas                         Int?
+  EspessuraFerramenta                             Float?
+  SaidaXFerramenta                                Float?
+  SaidaYFerramenta                                Float?
+  CaixaXMinimoPeca                                Float?
+  CaixaYMinimoPeca                                Float?
+  CaixaXMaximoPeca                                Float?
+  CaixaYMaximoPeca                                Float?
+  ComprimentoMinimoPeca                           Float?
+  ComprimentoMaximoPeca                           Float?
+  AnguloMinimoPeca                                Float?
+  AnguloMaximoPeca                                Float?
+  RaioMinimoPeca                                  Float?
+  RaioMaximoPeca                                  Float?
+  CasasDecimaisComandoNumerico                    Int?
+  ComandoNumericoVelocidadeMaximaCorte            Float?
+  ComandoNumericoVelocidadeMaximaCorteForma       Float?
+  TransmissaoUnidadeAlvo                          String?  @db.VarChar(1024)
+  TransmissaoCaminhoArquivoCorte                  String?  @db.VarChar(1024)
+  ModoTransmissao                                 Int?
+  ProcessadorPermitirFormas                       Boolean?
+  ProcessadorJuntarRetalhos                       Boolean?
+  ProcessadorPermitirSeparacaoPlanoCorte          Boolean?
+  ProcessadorPermitirEtiquetas                    Boolean?
+  ProcessadorPermitirArquivosProgressivos         Boolean?
+  ProcessadorPermitirCortesComoExibidos           Boolean?
+  ProcessadorPriorizarCorteFormas                 Boolean?
+  ProcessadorGerenciamentoEspessuraVidro          Boolean?
+  ProcessadorPermitirCortesMonodirecionais        Boolean?
+  ProcessadorPermitirInformacoesCNC               Boolean?
+  ProcessadorPermitirGerenciamentoVelocidadeCorte Boolean?
+  ProcessadorRotacionar90Graus                    Boolean?
+  ProcessadorSalvarArquivosMesmoDiretorio         Boolean?
+  PerfilReverterForma                             Boolean?
+  PerfilEspelharForma                             Boolean?
+  PerfilApararForma                               Boolean?
+  PerfilJuntarFormas                              Boolean?
+  PerfilAninharFormas                             Boolean?
+  PerfilModificarFiletes                          Boolean?
+  PerfilFiletarForma                              Boolean?
+  CaminhoOtimizacaoOtimizarFormas                 Boolean?
+  CaminhoOtimizacaoOtimizarFormasDentro           Boolean?
+  CaminhoOtimizacaoOtimizarTodasFormas            Boolean?
+  SerialNomePorta                                 String?  @db.VarChar(32)
+  SerialTaxaTransmissao                           Int?
+  SerialParidade                                  Int?
+  SerialBitParada                                 Int?
+  SerialBitsDados                                 Int?
+  SerialNegociacao                                Int?
+  SerialDtrHabilitado                             Boolean?
+  SerialRtsHabilitado                             Boolean?
+  ConfiguracaoPersonalizadaTransmissao            String?  @db.Text
+
+  @@index([IdComandoNumericoMesaCorte])
+  @@index([IdModeloMesaCorte])
+  @@index([IdUnidadeMedidaMesaCorte])
+  @@index([LinhaCorte])
+}
+
+model fornecedor {
+  IDFORNEC            Int       @id @default(autoincrement())
+  NOMEFANTASIA        String?   @db.VarChar(120)
+  razaoSocial         String?   @db.VarChar(150)
+  CPFCNPJ             String?   @db.VarChar(18)
+  RGINSCEST           String?   @db.VarChar(30)
+  ENDERECO            String?   @db.VarChar(250)
+  NUMERO              String?   @db.VarChar(20)
+  BAIRRO              String?   @db.VarChar(50)
+  CIDADE              String?   @db.VarChar(30)
+  CEP                 String?   @db.VarChar(9)
+  TELCONT             String?   @db.VarChar(15)
+  DTULTCOMPRA         DateTime?
+  DATAVIGENCIAPRECOS  DateTime?
+  VENDEDOR            String?   @db.VarChar(35)
+  TELCELVEND          String?   @db.VarChar(15)
+  DATACAD             DateTime?
+  USUCAD              Int?
+  TIPOPESSOA          String?   @db.Char(1)
+  IDCIDADE            Int?
+  EMAIL               String?   @db.VarChar(150)
+  FAX                 String?   @db.VarChar(15)
+  CREDITO             Decimal?  @db.Decimal(12, 2)
+  obs                 String?   @db.Text
+  COMPL               String?   @db.VarChar(100)
+  IDCONTA             Int?
+  IDCONTACONTABIL     Int?
+  TIPOPAGTO           Int?
+  CRT                 Int?
+  SUFRAMA             String?   @db.VarChar(9)
+  IDPAIS              Int?
+  UrlSistema          String?   @db.VarChar(500)
+  SITUACAO            Int?
+  PRODUTORRURAL       Int?
+  CONTATO             String?   @db.VarChar(35)
+  EMAILCONTATO        String?   @db.VarChar(150)
+  TELCONTATO          String?   @db.VarChar(15)
+  PASSAPORTEDOC       String?   @db.VarChar(20)
+  TokenAcessoWebGlass String?   @db.VarChar(1000)
+  bloquearPagto       Boolean?
+
+  @@index([IDCIDADE])
+  @@index([IDCONTA])
+  @@index([IDPAIS])
+  @@index([TIPOPAGTO])
+  @@index([USUCAD])
+}
+
+model tipo_produto {
+  IDTIPOPRODUTO Int     @id @default(autoincrement())
+  DESCRICAO     String  @unique(map: "UNIQUE_DESCRICAO") @db.VarChar(256)
+  SIGLA         String? @unique(map: "UNIQUE_SIGLA") @db.VarChar(50)
+
+  @@index([DESCRICAO])
+  @@index([IDTIPOPRODUTO])
+  @@index([SIGLA])
+}
+
+model funcionario {
+  IDFUNC                         Int       @id @default(autoincrement())
+  IDLOJA                         Int?
+  IDTIPOFUNC                     Int?
+  NOME                           String?   @db.VarChar(50)
+  ENDERECO                       String?   @db.VarChar(100)
+  COMPL                          String?   @db.VarChar(50)
+  BAIRRO                         String?   @db.VarChar(50)
+  CIDADE                         String?   @db.VarChar(50)
+  UF                             String?   @db.Char(2)
+  CEP                            String?   @db.VarChar(9)
+  CPF                            String?   @db.VarChar(14)
+  RG                             String?   @db.VarChar(10)
+  DATANASC                       DateTime?
+  ESTCIVIL                       String?   @db.VarChar(15)
+  TELRES                         String?   @db.VarChar(15)
+  TELCONT                        String?   @db.VarChar(15)
+  TELCEL                         String?   @db.VarChar(15)
+  LOGIN                          String?   @db.VarChar(20)
+  SENHA                          String?   @db.VarChar(128)
+  SITUACAO                       Int?
+  DATAENT                        DateTime?
+  DATASAIDA                      DateTime?
+  SALARIO                        Decimal?  @db.Decimal(12, 2)
+  USUCAD                         Int?
+  DATACAD                        DateTime?
+  GRATIFICACAO                   Decimal?  @db.Decimal(12, 2)
+  AUXALIMENTACAO                 Decimal?  @db.Decimal(12, 2)
+  EMAIL                          String?   @db.VarChar(150)
+  COMISSAO                       Decimal?  @db.Decimal(12, 2)
+  OBS                            String?   @db.VarChar(300)
+  RAMAL                          String?   @db.VarChar(30)
+  REGISTRADO                     Boolean?
+  NUMCARTEIRATRABALHO            String?   @db.VarChar(20)
+  NUMPIS                         String?   @db.VarChar(20)
+  ADMINSYNC                      Boolean?
+  TIPOPEDIDO                     String?   @db.VarChar(15)
+  FUNCAO                         String?   @db.VarChar(50)
+  ENVIAREMAIL                    Boolean?  @default(false)
+  NUMEROPDV                      Int?
+  HABILITARCONTROLEUSUARIOS      Boolean?  @default(false)
+  HABILITARCHAT                  Boolean?  @default(true)
+  VALORMAXAPROVSOLICITACAOCOMPRA Decimal?  @db.Decimal(12, 2)
+  LIMITEMENSALCOMPRA             Decimal?  @db.Decimal(12, 2)
+  EMAILCOMERCIAL                 String?   @db.VarChar(150)
+  SERVIDOREMAILCOMERCIAL         String?   @db.VarChar(150)
+  LOGINEMAILCOMERCIAL            String?   @db.VarChar(150)
+  SENHAEMAILCOMERCIAL            String?   @db.VarChar(150)
+  PORTAENVIOEMAIL                Int?
+  ATIVARSSLENVIOEMAIL            Boolean?  @default(false)
+  PROTOCOLOSEGURANCAENVIOEMAIL   Int?
+  Representante                  Boolean?
+  CodigoPlanoContaContabil       String?   @db.VarChar(60)
+  DataUltimaAlteracaoSenha       DateTime?
+  IdRepresentante                Int?
+
+  @@index([IDLOJA])
+  @@index([IdRepresentante])
+  @@index([IDTIPOFUNC])
+  @@index([SITUACAO])
+  @@index([USUCAD])
+}
+
+model cliente {
+  ID_CLI                                Int       @id @default(autoincrement())
+  ID_LOJA                               Int?
+  TIPO_PESSOA                           String?   @db.Char(1)
+  nome                                  String?   @db.VarChar(75)
+  ENDERECO                              String?   @db.VarChar(250)
+  COMPL                                 String?   @db.VarChar(60)
+  BAIRRO                                String?   @db.VarChar(100)
+  CIDADE                                String?   @db.VarChar(30)
+  CEP                                   String?   @db.VarChar(9)
+  CPF_CNPJ                              String?   @db.VarChar(22)
+  RG_ESCINST                            String?   @db.VarChar(30)
+  DATA_NASC                             DateTime?
+  DT_ULT_COMPRA                         DateTime?
+  TEL_RES                               String?   @db.VarChar(15)
+  TEL_CONT                              String?   @db.VarChar(15)
+  TEL_CEL                               String?   @db.VarChar(15)
+  OBS                                   String?   @db.Text
+  HISTORICO                             String?   @db.Text
+  LIMITE                                Decimal?  @db.Decimal(12, 2)
+  LIMITECHEQUES                         Decimal?  @db.Decimal(12, 2)
+  VALORMEDIAINI                         Decimal?  @db.Decimal(12, 2)
+  VALORMEDIAFIM                         Decimal?  @db.Decimal(12, 2)
+  LOGIN                                 String?   @db.VarChar(20)
+  SENHA                                 String?   @db.VarChar(128)
+  SITUACAO                              Int?
+  DATACAD                               DateTime?
+  USUCAD                                Int?
+  REVENDA                               Boolean?
+  EMAIL                                 String?   @db.VarChar(150)
+  EMAILCOBRANCA                         String?   @db.VarChar(150)
+  EMAILFISCAL                           String?   @db.VarChar(100)
+  CREDITO                               Decimal?  @db.Decimal(12, 2)
+  NUMERO                                String?   @db.VarChar(10)
+  IDCIDADE                              Int?
+  TIPOPAGTO                             Int?
+  FAX                                   String?   @db.VarChar(15)
+  CONTATO                               String?   @db.VarChar(30)
+  EMAILCONTATO                          String?   @db.VarChar(150)
+  SETORCONTATO                          String?   @db.VarChar(50)
+  DATAALT                               DateTime?
+  USUALT                                Int?
+  CONTATO1                              String?   @db.VarChar(50)
+  CELCONTATO1                           String?   @db.VarChar(15)
+  RAMALCONTATO1                         String?   @db.VarChar(15)
+  EMAILCONTATO1                         String?   @db.VarChar(150)
+  CONTATO2                              String?   @db.VarChar(50)
+  CELCONTATO2                           String?   @db.VarChar(15)
+  RAMALCONTATO2                         String?   @db.VarChar(15)
+  EMAILCONTATO2                         String?   @db.VarChar(150)
+  NOMEFANTASIA                          String?   @db.VarChar(100)
+  COBRARICMSST                          Boolean?
+  IDCOMISSIONADO                        Int?
+  PERCSINALMIN                          Float?
+  IDFUNC                                Int?
+  TOTALCOMPRADO                         Decimal?  @db.Decimal(12, 2)
+  PAGAMENTOANTESPRODUCAO                Boolean?
+  COBRARIPI                             Boolean?
+  SUFRAMA                               String?   @db.VarChar(9)
+  IDFORMAPAGTO                          Int?
+  IGNORARBLOQUEIOPEDPRONTO              Boolean?
+  BLOQUEARRECEBCHEQUELIMITE             Boolean?
+  BLOQUEARRECEBCHEQUEPROPRIOLIMITE      Boolean?
+  IDTIPOCLIENTE                         Int?
+  NAORECEBEREMAILCOBRANCAVENCIDA        Boolean?
+  NAORECEBEREMAILCOBRANCAVENCER         Boolean?
+  NAORECEBEEMAILPEDPRONTO               Boolean?
+  NAORECEBEEMAILPEDPCP                  Boolean?
+  NAORECEBESMS                          Boolean?
+  CEPCOBRANCA                           String?   @db.VarChar(9)
+  ENDERECOCOBRANCA                      String?   @db.VarChar(250)
+  NUMEROCOBRANCA                        String?   @db.VarChar(10)
+  COMPLCOBRANCA                         String?   @db.VarChar(60)
+  BAIRROCOBRANCA                        String?   @db.VarChar(100)
+  CIDADECOBRANCA                        String?   @db.VarChar(30)
+  IDCIDADECOBRANCA                      Int?
+  IDTABELADESCONTO                      Int?
+  PERCCOMISSAOFUNC                      Float?
+  PERCENTUALCOMISSAO                    Float?
+  BLOQUEARPEDIDOCONTAVENCIDA            Boolean?
+  UrlSistema                            String?   @db.VarChar(500)
+  GERARORCAMENTOPCP                     Boolean?
+  TIPOFISCAL                            Int?
+  CEPENTREGA                            String?   @db.VarChar(9)
+  ENDERECOENTREGA                       String?   @db.VarChar(250)
+  NUMEROENTREGA                         String?   @db.VarChar(10)
+  COMPLENTREGA                          String?   @db.VarChar(60)
+  BAIRROENTREGA                         String?   @db.VarChar(100)
+  IDCIDADEENTREGA                       Int?
+  PRODUTORRURAL                         Boolean?
+  NAORECEBEEMAILFISCAL                  Boolean?
+  DTULTCONSINTEGRA                      DateTime?
+  USUARIOULTCONSINTEGRA                 Int?
+  IDTRANSPORTADOR                       Int?
+  CRT                                   Int?
+  CONTROLARESTOQUEVIDROS                Boolean?
+  OBSNFE                                String?   @db.Text
+  NAOENVIAREMAILLIBERACAO               Boolean?
+  SOMENTEOCTRANSFERENCIA                Boolean?
+  OBSLIBERACAO                          String?   @db.VarChar(1000)
+  DATALIMITECAD                         DateTime?
+  CNAE                                  String?   @db.VarChar(10)
+  IDCONTABANCO                          Int?
+  IDCONTACONTABIL                       Int?
+  USOLIMITE                             Decimal?  @db.Decimal(12, 2)
+  IMPORTACAO                            Boolean?
+  IDFUNCATENDENTE                       Int?
+  INDICADORIEDESTINATARIO               Int?
+  HABILITAREDITORCAD                    Boolean?
+  IDSSUBGRUPOPROD                       String?   @db.VarChar(100)
+  IDPAIS                                Int?
+  NUMESTRANGEIRO                        String?   @db.VarChar(30)
+  DESCONTOECOMMERCE                     Decimal?  @db.Decimal(12, 2)
+  DATAATUALIZACAOUSOLIMITE              DateTime?
+  PERCENTUALBONIFICACAO                 Decimal?  @db.Decimal(12, 2)
+  IgnorarNoSmsResumoDiario              Boolean?
+  PERMITIRENVIARTABELADESCONTOACRESCIMO Boolean?  @default(false)
+  PERCENTUALCOMISSAOCOMISSIONADO        Decimal?  @db.Decimal(12, 2)
+  SenhaNumerica                         String?   @db.VarChar(20)
+  IdGrupoCliente                        Int?
+  IDTABELADESCONTOPROMOCIONAL           Int?
+  DataUltimaAlteracaoSenha              DateTime?
+  TipoTagXPed                           Int       @default(1)
+  TipoTagNItemPed                       Int       @default(1)
+  EmitirNotaAoFaturarCarregamento       Boolean   @default(false)
+  UsarDiaFixoVencimento                 Boolean   @default(false)
+  DiaFixoVencimento                     Int?
+
+  @@index([IDCIDADE])
+  @@index([IDCIDADECOBRANCA])
+  @@index([IDCIDADEENTREGA])
+  @@index([IDCOMISSIONADO])
+  @@index([IDCONTABANCO])
+  @@index([IDFORMAPAGTO])
+  @@index([IDFUNC])
+  @@index([IDTABELADESCONTO])
+  @@index([IDTABELADESCONTOPROMOCIONAL])
+  @@index([IDTIPOCLIENTE])
+  @@index([IDTRANSPORTADOR])
+  @@index([ID_LOJA])
+  @@index([IdGrupoCliente])
+  @@index([nome])
+  @@index([TIPOPAGTO])
+  @@index([TOTALCOMPRADO])
+  @@index([USUALT])
+  @@index([USUARIOULTCONSINTEGRA])
+  @@index([USUCAD])
+}
+
+model pedido {
+  IDPEDIDO                       Int       @id @default(autoincrement())
+  IDLOJA                         Int?
+  IDFUNC                         Int?
+  IDCLI                          Int?
+  IDROTA                         Int?
+  IDFORMAPAGTO                   Int?
+  IDORCAMENTO                    Int?
+  TOTAL                          Decimal?  @db.Decimal(12, 2)
+  PRAZOENTREGA                   String?   @db.VarChar(300)
+  TIPOENTREGA                    Int?
+  TIPOVENDA                      Int?
+  DATAENTREGA                    DateTime? @db.Date
+  VALORENTREGA                   Decimal?  @db.Decimal(12, 2)
+  SITUACAO                       Int?
+  VALORENTRADA                   Decimal?  @db.Decimal(12, 2)
+  DATACAD                        DateTime?
+  USUCAD                         Int?
+  NUMPARC                        Int?
+  DESCONTO                       Decimal?  @db.Decimal(12, 2)
+  OBS                            String?   @db.VarChar(1500)
+  CUSTOPEDIDO                    Decimal?  @db.Decimal(12, 2)
+  DATACONF                       DateTime?
+  USUCONF                        Int?
+  DATACANC                       DateTime?
+  USUCANC                        Int?
+  ENDERECOOBRA                   String?   @db.VarChar(100)
+  BAIRROOBRA                     String?   @db.VarChar(50)
+  CIDADEOBRA                     String?   @db.VarChar(50)
+  LOCALOBRA                      Boolean?
+  IDFORMAPAGTO2                  Int?
+  IDTIPOCARTAO                   Int?
+  IDTIPOCARTAO2                  Int?
+  CodCliente                     String?   @db.VarChar(70)
+  NUMAUTCONSTRUCARD              String?   @db.VarChar(30)
+  IDPROJETO                      Int?
+  IDLIBERARPEDIDO                Int?
+  IDCOMISSIONADO                 Int?
+  PERCCOMISSAO                   Float?
+  VALORCOMISSAO                  Decimal?  @db.Decimal(12, 2)
+  IDPEDIDOANTERIOR               Int?
+  FASTDELIVERY                   Boolean?
+  DATAPEDIDO                     DateTime?
+  VALORICMS                      Decimal?  @db.Decimal(12, 2)
+  SUBSTITUIRICMSSTPELODIFAL      Boolean?
+  ALIQUOTAICMS                   Float?
+  IDOBRA                         Int?
+  IDMEDIDOR                      Int?
+  TAXAPRAZO                      Float?
+  MAODEOBRA                      Boolean?
+  TIPODESCONTO                   Int?
+  ACRESCIMO                      Decimal?  @db.Decimal(12, 2)
+  TIPOACRESCIMO                  Int?
+  PRODUCAO                       Boolean?
+  TAXAFASTDELIVERY               Float?
+  TEMPERAFORA                    Boolean?
+  COMISSAOALTERAVALOR            Boolean?
+  SITUACAOPRODUCAO               Int?
+  IDFUNCVENDA                    Int?
+  DATAENTREGAORIGINAL            DateTime?
+  PESO                           Float?
+  TOTM                           Float?
+  GERADOPARCEIRO                 Boolean?
+  VALORCREDITOAOCONFIRMAR        Decimal?  @db.Decimal(12, 2)
+  CREDITOGERADOCONFIRMAR         Decimal?  @db.Decimal(12, 2)
+  CREDITOUTILIZADOCONFIRMAR      Decimal?  @db.Decimal(12, 2)
+  ALIQUOTAIPI                    Float?
+  VALORIPI                       Decimal?  @db.Decimal(12, 2)
+  IDPARCELA                      Int?
+  CEPOBRA                        String?   @db.VarChar(9)
+  TIPOPEDIDO                     Int?
+  SUBTIPOPEDIDO                  Int?      @default(0)
+  IDSINAL                        Int?
+  IDPAGAMENTOANTECIPADO          Int?
+  VALORPAGAMENTOANTECIPADO       Decimal?  @db.Decimal(12, 2)
+  DATAPRONTO                     DateTime?
+  OBSLIBERACAO                   String?   @db.VarChar(300)
+  LIBERADOFINANC                 Boolean?
+  IDFUNCDESC                     Int?
+  DATADESC                       DateTime?
+  Importado                      Boolean?
+  ROTAEXTERNA                    String?   @db.VarChar(100)
+  CLIENTEEXTERNO                 String?   @db.VarChar(100)
+  PEDCLIEXTERNO                  String?   @db.VarChar(100)
+  PERCENTUALCOMISSAO             Float?
+  CELCLIEXTERNO                  String?   @db.VarChar(15)
+  DEVETRANSFERIR                 Boolean?
+  APENASTRANSFERENCIA            Boolean?
+  DATAFIN                        DateTime?
+  USUFIN                         Int?
+  IDFUNCCONFIRMARFINANC          Int?
+  IDFUNCFINALIZARFINANC          Int?
+  DATAUNICA                      String?   @db.Char(16)
+  IDCLIENTEEXTERNO               Int?
+  IDPEDIDOEXTERNO                Int?
+  ENDERECOCLIENTEEXTERNO         String?   @db.VarChar(128)
+  CIDADECLIENTEEXTERNO           String?   @db.VarChar(32)
+  UFCLIENTEEXTERNO               String?   @db.VarChar(2)
+  TOTALPEDIDOEXTERNO             Decimal?  @db.Decimal(12, 2)
+  GERARPEDIDOPRODUCAOCORTE       Boolean
+  IDPEDIDOREVENDA                Int?
+  ORDEMCARGAPARCIAL              Boolean?
+  IGNORARCOMISSAO                Boolean?
+  MOTIVOIGNORARCOMISSAO          String?   @db.VarChar(200)
+  IDTRANSPORTADOR                Int?
+  PERCENTUALRENTABILIDADE        Decimal   @default(0.00) @db.Decimal(12, 2)
+  RENTABILIDADEFINANCEIRA        Decimal   @default(0.00) @db.Decimal(12, 2)
+  TRANSACAO                      Boolean?  @default(false)
+  DATAENTREGASISTEMA             DateTime?
+  IDCLIENTENOTAFISCAL            Int?
+  PERCENTUALACRESCIMOPRODUTO     Decimal?  @db.Decimal(22, 12)
+  PERCENTUALDESCONTOPRODUTO      Decimal?  @db.Decimal(22, 12)
+  PERCENTUALCOMISSAOPRODUTO      Decimal?  @db.Decimal(22, 12)
+  PERCENTUALFRETE                Decimal?  @db.Decimal(22, 12)
+  ValorRecebimento               Decimal?  @db.Decimal(12, 2)
+  DESCONTOECOMMERCE              Decimal?  @db.Decimal(12, 2)
+  GeradoWgTerminal               Boolean   @default(false)
+  IdSinalCobrancaPix             Int?
+  IdPedidoOriginal               Int?
+  Reprovado                      Boolean   @default(false)
+  PossuiReprovacoes              Boolean   @default(false)
+  TOTALPERCENTUALCOMISSAOPRODUTO Decimal?  @db.Decimal(12, 4)
+  TOTALCOMISSAOPRODUTO           Decimal?  @db.Decimal(12, 2)
+  DataFabricaConfirmacao         DateTime?
+  DataEntregaConfirmacao         DateTime?
+  VALORFASTDELIVERY              Decimal?  @db.Decimal(12, 4)
+  Transferido                    Boolean   @default(false)
+  IdPedidoOrigemReposicao        Int?
+  ValorFaturamento               Decimal   @default(0.00) @db.Decimal(12, 2)
+  DataCarregamento               DateTime?
+  DataEntregaRota                DateTime?
+  DataEnvioFinanceiro            DateTime?
+  IdFuncionarioEditando          Int?
+
+  @@unique([DATAUNICA, USUCAD, IDLOJA, IDFUNC, IDCLI, SITUACAO, CodCliente, TIPOVENDA, TIPOENTREGA, TIPOPEDIDO, TOTM, PESO])
+  @@index([DATACAD])
+  @@index([DATAENTREGA])
+  @@index([DataEnvioFinanceiro])
+  @@index([DATAPEDIDO])
+  @@index([DATAPRONTO])
+  @@index([IDCLI])
+  @@index([IDCLIENTENOTAFISCAL])
+  @@index([IDCOMISSIONADO])
+  @@index([IDFORMAPAGTO])
+  @@index([IDFORMAPAGTO2])
+  @@index([IDFUNC])
+  @@index([IDFUNCDESC])
+  @@index([IDFUNCVENDA])
+  @@index([IDLIBERARPEDIDO])
+  @@index([IDLOJA])
+  @@index([IDMEDIDOR])
+  @@index([IDOBRA])
+  @@index([IDORCAMENTO])
+  @@index([IDPAGAMENTOANTECIPADO])
+  @@index([IDPARCELA])
+  @@index([IDPEDIDOANTERIOR])
+  @@index([IdPedidoOrigemReposicao])
+  @@index([IDPEDIDOREVENDA])
+  @@index([IDPEDIDOREVENDA, SITUACAO])
+  @@index([IDPROJETO])
+  @@index([IDROTA])
+  @@index([IDSINAL])
+  @@index([IdSinalCobrancaPix])
+  @@index([IDTIPOCARTAO])
+  @@index([IDTIPOCARTAO2])
+  @@index([IDTRANSPORTADOR])
+  @@index([Reprovado])
+  @@index([SITUACAO])
+  @@index([SUBTIPOPEDIDO])
+  @@index([TIPOENTREGA])
+  @@index([TIPOPEDIDO])
+  @@index([TIPOVENDA])
+  @@index([USUCAD])
+  @@index([USUCANC])
+  @@index([USUCONF])
+  @@index([USUFIN])
+  @@index([TOTAL])
+  @@map("pedido")
+}
+
+model icms_produto_uf {
+  IDICMSPRODUF                BigInt   @id @default(autoincrement())
+  IDPROD                      Int
+  UFORIGEM                    String?  @db.Char(2)
+  UFDESTINO                   String?  @db.Char(2)
+  ALIQUOTAINTRA               Float?
+  ALIQUOTAINTER               Float?
+  ALIQUOTAINTERNADESTINATARIO Decimal? @db.Decimal(12, 2)
+  IDTIPOCLIENTE               Int?
+  ALIQUOTAFCPINTRAESTADUAL    Float?
+  ALIQUOTAINTERESTADUAL       Float?
+  ALIQUOTAFCPINTERESTADUAL    Float?
+  AliquotaFCPSt               Decimal? @default(0.00) @db.Decimal(12, 2)
+
+  @@unique([IDPROD, UFORIGEM, UFDESTINO, IDTIPOCLIENTE])
+  @@index([IDPROD])
+  @@index([IDTIPOCLIENTE])
+}
+
+model benef_config_vector {
+  IDBENEFCONFIG Int @id @default(autoincrement())
+
+  embedding Unsupported("vector(1536)")?
+
+  contextText String? @db.Text
+  chunkIndex  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([IDBENEFCONFIG])
+  @@map("benef_config_vector")
+}
+
+model benef_config {
+  IDBENEFCONFIG                       Int      @id @default(autoincrement())
+  IDPARENT                            Int?
+  NOME                                String?  @db.VarChar(50)
+  DESCRICAO                           String?  @db.VarChar(50)
+  TIPOCONTROLE                        Int?
+  TIPOCALCULO                         Int?
+  TIPOESPESSURA                       Int?
+  COBRANCAOPCIONAL                    Boolean?
+  NUMSEQ                              Int?
+  SITUACAO                            Int?
+  COBRARAREAMINIMA                    Boolean?
+  GERARETIQUETAMOLDE                  Boolean?
+  IDAPLICACAO                         Int?
+  IDPROCESSO                          Int?
+  IDPROD                              Int?
+  ACRESCIMOALTURA                     Int?
+  ACRESCIMOLARGURA                    Int?
+  NAOEXIBIRETIQUETA                   Boolean?
+  TIPOBENEF                           Int?
+  IDSSUBGRUPOPREENCHIMENTOOBRIGATORIO String?  @db.VarChar(200)
+  IdSetorControleCapacidadeDiaria     Int?
+  TIPOENTREGAPREENCHIMENTOOBRIGATORIO Int?
+  LARGURAMAXIMAPECA                   Int?
+  ALTURAMAXIMAPECA                    Int?
+
+  @@index([IDAPLICACAO])
+  @@index([IDPARENT])
+  @@index([IDPROCESSO])
+  @@index([IdSetorControleCapacidadeDiaria])
+  @@index([IdSetorControleCapacidadeDiaria, TIPOCALCULO])
+}
+
+model benef_config_preco {
+  IDBENEFCONFIGPRECO Int      @id @default(autoincrement())
+  IDBENEFCONFIG      Int?
+  IDSUBGRUPOPROD     Int?
+  IDCORVIDRO         Int?
+  ESPESSURA          Float?
+  VALORATACADO       Decimal? @db.Decimal(12, 2)
+  VALORBALCAO        Decimal? @db.Decimal(12, 2)
+  VALOROBRA          Decimal? @db.Decimal(12, 2)
+  CUSTO              Decimal? @db.Decimal(12, 2)
+
+  @@index([IDBENEFCONFIG])
+  @@index([IDCORVIDRO])
+  @@index([IDSUBGRUPOPROD])
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
+// Entidades para Chat
+
+// Grupo de chat
+model ChatGroup {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Informações básicas
+  name         String? @db.VarChar(100)
+  description  String? @db.Text
+  isPrivate    Boolean @default(false)
+  isDirectChat Boolean @default(false) // Conversa exclusivamente entre 2 pessoas
+
+  // Status
+  active Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamentos
+  criadorUuid String? @db.Uuid
+  criador     Users?  @relation("ChatGroupCriador", fields: [criadorUuid], references: [uuid])
+
+  // Membros do grupo
+  members ChatGroupMember[]
+
+  // Mensagens do grupo
+  messages ChatMessage[]
+
+  @@index([name])
+  @@index([active])
+  @@index([createdAt])
+  @@index([criadorUuid])
+  @@map("chat_groups")
+}
+
+// Membro de grupo de chat
+model ChatGroupMember {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao grupo
+  chatGroupUuid String    @db.Uuid
+  chatGroup     ChatGroup @relation(fields: [chatGroupUuid], references: [uuid], onDelete: Cascade)
+
+  // Referência ao usuário
+  userUuid String @db.Uuid
+  user     Users  @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+
+  // Status do membro
+  isAdmin Boolean @default(false)
+  isMuted Boolean @default(false)
+  active  Boolean @default(true)
+
+  // Timestamps
+  joinedAt  DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([chatGroupUuid, userUuid])
+  @@index([chatGroupUuid])
+  @@index([userUuid])
+  @@index([active])
+  @@index([joinedAt])
+  @@map("chat_group_members")
+}
+
+// Mensagem de chat
+model ChatMessage {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência ao grupo
+  chatGroupUuid String    @db.Uuid
+  chatGroup     ChatGroup @relation(fields: [chatGroupUuid], references: [uuid], onDelete: Cascade)
+
+  // Referência ao usuário que enviou
+  userUuid String @db.Uuid
+  user     Users  @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+
+  // Conteúdo da mensagem
+  content     String? @db.Text
+  messageType String? @db.VarChar(50) // 'text', 'image', 'file', 'system'
+  fileUrl     String? @db.Text
+  fileName    String? @db.VarChar(255)
+
+  // Status da mensagem
+  isEdited  Boolean @default(false)
+  isDeleted Boolean @default(false)
+  active    Boolean @default(true)
+
+  // Confirmação de leitura
+  readBy ChatMessageReads[]
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([chatGroupUuid])
+  @@index([userUuid])
+  @@index([active])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+model ChatMessageReads {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência a mensagem
+  messageUuid String      @db.Uuid
+  message     ChatMessage @relation(fields: [messageUuid], references: [uuid], onDelete: Cascade)
+
+  // Referência ao usuário que enviou
+  userUuid String @db.Uuid
+  user     Users  @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+
+  // Timestamp de leitura
+  readAt DateTime @default(now())
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([messageUuid])
+  @@index([userUuid])
+  @@map("chat_message_reads")
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
+// Entidades para Comunicações Internas
+
+// Comunicação interna
+model Comunicacao {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Informações básicas
+  titulo        String?  @db.VarChar(200)
+  conteudo      String?  @db.Text
+  tipo          String?  @db.VarChar(50) // 'texto', 'html', 'imagem', 'arquivo', 'link'
+  destinatarios String[] // Array de destinatários (ex: ['Todos', 'Admin', 'Colaboradores'])
+
+  // Status
+  active Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamentos
+  autorUuid String @db.Uuid
+  autor     Users  @relation(fields: [autorUuid], references: [uuid])
+
+  // Relacionamentos com outras entidades
+  lidaPor ComunicacaoLida[]
+  anexos  ComunicacaoAnexo[]
+
+  @@index([titulo])
+  @@index([tipo])
+  @@index([active])
+  @@index([createdAt])
+  @@index([autorUuid])
+  @@map("comunicacoes")
+}
+
+// Registro de leitura da comunicação
+model ComunicacaoLida {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência à comunicação
+  comunicacaoUuid String      @db.Uuid
+  comunicacao     Comunicacao @relation(fields: [comunicacaoUuid], references: [uuid], onDelete: Cascade)
+
+  // Referência ao usuário que leu
+  userUuid String @db.Uuid
+  user     Users  @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+
+  // Timestamp de leitura
+  lidaEm DateTime @default(now())
+
+  @@unique([comunicacaoUuid, userUuid])
+  @@index([comunicacaoUuid])
+  @@index([userUuid])
+  @@index([lidaEm])
+  @@map("comunicacoes_lidas")
+}
+
+// Anexos da comunicação
+model ComunicacaoAnexo {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  // Referência à comunicação
+  comunicacaoUuid String      @db.Uuid
+  comunicacao     Comunicacao @relation(fields: [comunicacaoUuid], references: [uuid], onDelete: Cascade)
+
+  // Informações do anexo
+  nome String? @db.VarChar(255)
+  tipo String? @db.VarChar(100)
+  url  String? @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([comunicacaoUuid])
+  @@index([tipo])
+  @@map("comunicacoes_anexos")
+}
+
+// ------------------------------------------------------------------------------------------------
+
+model formapagto {
+  IDFORMAPAGTO  Int      @id @default(autoincrement())
+  DESCRICAO     String?  @db.VarChar(40)
+  APENASSISTEMA Boolean?
+}
+
+model formapagto_cliente {
+  IDCLIENTE    Int @default(0)
+  IDFORMAPAGTO Int @default(0)
+  TIPOVENDA    Int
+
+  @@id([IDCLIENTE, IDFORMAPAGTO, TIPOVENDA])
+  @@index([IDCLIENTE])
+  @@index([IDFORMAPAGTO])
+}
+
+model parcelas {
+  IDPARCELA     Int      @id @default(autoincrement())
+  NUMPARCELAS   Int?
+  Dias          String?  @db.VarChar(200)
+  DESCRICAO     String?  @db.VarChar(100)
+  PARCELAPADRAO Int?
+  DESCONTO      Decimal? @db.Decimal(12, 2)
+  SITUACAO      Int?
+  ParcelaAVista Boolean?
+  GerarPix      Int      @default(0)
+
+  @@index([GerarPix])
+}
+
+model tipo_entrega {
+  IDTIPOENTREGA Int     @id @default(0)
+  DESCRICAO     String? @db.Char(50)
+}
+
+model transportador {
+  IDTRANSPORTADOR Int     @id @default(autoincrement())
+  NOME            String? @db.VarChar(50)
+  CPFCNPJ         String? @db.VarChar(18)
+  INSCEST         String? @db.VarChar(30)
+  PLACA           String? @db.VarChar(10)
+  ENDERECO        String? @db.VarChar(50)
+  NUMERO          String? @db.VarChar(10)
+  COMPLEMENTO     String? @db.VarChar(100)
+  BAIRRO          String? @db.VarChar(30)
+  CEP             String? @db.VarChar(9)
+  TELEFONE        String? @db.VarChar(15)
+  EMAIL           String? @db.VarChar(150)
+  CONTATO         String? @db.VarChar(50)
+  TELEFONECONTATO String? @db.VarChar(15)
+  IDCIDADE        Int?
+  TIPOPESSOA      Int?
+  SUFRAMA         String? @db.VarChar(9)
+  NOMEFANTASIA    String? @db.VarChar(50)
+  OBS             String? @db.VarChar(200)
+  IdContaContabil Int?
+
+  @@index([IDCIDADE], map: "INDEX_IDCIDADE")
+}
+
+model cidade {
+  IDCIDADE      Int     @id @default(autoincrement())
+  NOMECIDADE    String? @db.VarChar(100)
+  CODIBGECIDADE String? @db.VarChar(5)
+  NOMEUF        String? @db.VarChar(30)
+  CODIBGEUF     String? @db.Char(2)
+
+  @@index([CODIBGECIDADE], map: "INDEX_codIbgeCidade")
+}
+
+//
+
+model projeto_modelo {
+  IDPROJETOMODELO      Int      @id @default(autoincrement())
+  IDGRUPOMODELO        Int?
+  IDSUBGRUPOMODELO     Int?
+  codigo               String?  @db.VarChar(50)
+  Descricao            String?  @db.VarChar(300)
+  NOMEFIGURA           String?  @db.VarChar(54)
+  NOMEFIGURAASSOCIADA  String?  @db.VarChar(56)
+  ALTURAFIGURA         Int?
+  LARGURAFIGURA        Int?
+  TEXTOORCAMENTO       String?  @db.VarChar(1000)
+  TIPOMEDIDASINST      Int?
+  TIPOCALCALUMINIO     Int?
+  TIPODESENHO          Int?
+  EIXOPUXADOR          Boolean?
+  SITUACAO             Int?
+  TEXTOORCAMENTOVIDRO  String?  @db.VarChar(1000)
+  IDPRODPARANF         Int?
+  CORVIDRO             String?  @db.VarChar(100)
+  APELIDO              String?  @db.VarChar(64)
+  ExibirCorVidro       Boolean  @default(true)
+  ExibirEspessura      Boolean  @default(true)
+  ExibirCorAluminio    Boolean  @default(true)
+  ExibirCorFerragem    Boolean  @default(true)
+  ExibirApenasVidros   Boolean  @default(true)
+  ExibirMedidasExatas  Boolean  @default(true)
+  ExibirTipoVidro      Boolean  @default(false)
+  ExibirInsercaoRapida Boolean  @default(true)
+
+  @@index([IDGRUPOMODELO])
+  @@index([IDPRODPARANF])
+}
+
+model grupo_modelo {
+  IDGRUPOMODELO Int      @id @default(autoincrement())
+  DESCRICAO     String?  @db.VarChar(100)
+  SITUACAO      Int?
+  BOXPADRAO     Boolean?
+  ESQUADRIA     Boolean?
+}
+
+model subgrupo_modelo {
+  IDSUBGRUPOMODELO    Int     @id @default(autoincrement())
+  IDGRUPOMODELO       Int
+  IDSUBGRUPOMODELOPAI Int?
+  CAMINHO             String? @db.Text
+  DESCRICAO           String? @db.VarChar(100)
+  SITUACAO            Int?
+}
+
+model item_medida_projeto_modelo {
+  IdItemMedidaProjetoModelo Int @id @default(autoincrement())
+  IdItemMedidaProjeto       Int
+  IdProjetoModelo           Int
+
+  @@index([IdProjetoModelo])
+}
+
+model item_projeto {
+  IDITEMPROJETO   Int      @id @default(autoincrement())
+  IDPROJETO       Int?
+  IDPROJETOMODELO Int?
+  IDCORVIDRO      Int?
+  ESPESSURAVIDRO  Int?
+  ambiente        String?  @db.VarChar(80)
+  QTDE            Int?
+  M2VAO           Float?
+  Total           Decimal? @db.Decimal(12, 4)
+  IDCORALUMINIO   Int?
+  IDCORFERRAGEM   Int?
+  CUSTOTOTAL      Decimal? @db.Decimal(12, 2)
+  MEDIDAEXATA     Boolean?
+  OBS             String?  @db.VarChar(500)
+  IDORCAMENTO     Int?
+  APENASVIDROS    Boolean?
+  IDPEDIDO        Int?
+  IDPEDIDOESPELHO Int?
+  CONFERIDO       Boolean?
+  ESPELHARPROJETO Boolean?
+  TipoVidro       Int?
+
+  @@index([IDCORALUMINIO])
+  @@index([IDCORFERRAGEM])
+  @@index([IDCORVIDRO])
+  @@index([IDORCAMENTO])
+  @@index([IDPEDIDO])
+  @@index([IDPEDIDOESPELHO])
+  @@index([IDPROJETO])
+  @@index([IDPROJETOMODELO])
+}
+
+model material_projeto_modelo {
+  IDMATERPROJMOD  Int     @id @default(autoincrement())
+  IDPROJETOMODELO Int?
+  IDPRODPROJ      Int
+  QTDE            Int?
+  ALTURA          Float?
+  LARGURA         Int?
+  ESPESSURAS      String? @db.VarChar(10)
+  TOTM            Float?
+  CALCULOQTDE     String? @db.VarChar(255)
+  CALCULOALTURA   String? @db.VarChar(255)
+  GRAUCORTE       Int?
+
+  @@index([IDPRODPROJ])
+  @@index([IDPROJETOMODELO])
+}
+
+model medida_projeto_modelo {
+  IDMEDIDAPROJETOMODELO Int  @id @default(autoincrement())
+  IDPROJETOMODELO       Int?
+  IDMEDIDAPROJETO       Int?
+
+  @@index([IDMEDIDAPROJETO])
+  @@index([IDPROJETOMODELO])
+}
+
+model peca_projeto_modelo {
+  IDPECAPROJMOD      Int      @id @default(autoincrement())
+  IDPROJETOMODELO    Int?
+  ALTURA02MM         Int?     @default(0)
+  LARGURA02MM        Int?     @default(0)
+  ALTURA03MM         Int?
+  LARGURA03MM        Int?
+  ALTURA04MM         Int?
+  LARGURA04MM        Int?
+  ALTURA05MM         Int?
+  LARGURA05MM        Int?
+  ALTURA06MM         Int?
+  LARGURA06MM        Int?
+  ALTURA08MM         Int?
+  LARGURA08MM        Int?
+  ALTURA10MM         Int?
+  LARGURA10MM        Int?
+  ALTURA12MM         Int?
+  LARGURA12MM        Int?
+  ALTURA15MM         Int?     @default(0)
+  LARGURA15MM        Int?     @default(0)
+  ALTURA19MM         Int?     @default(0)
+  LARGURA19MM        Int?     @default(0)
+  ALTURA             Int?
+  LARGURA            Int?
+  TIPO               Int?
+  QTDE               Int?
+  ITEM               String?  @db.VarChar(20)
+  CALCULOALTURA      String?  @db.VarChar(255)
+  CALCULOLARGURA     String?  @db.VarChar(255)
+  CALCULOQTDE        String?  @db.VarChar(255)
+  REDONDO            Boolean?
+  OBS                String?  @db.VarChar(100)
+  IDARQUIVOMESACORTE Int?
+  TIPOARQUIVO        Int?
+  IDAPLICACAO        Int?
+  IDPROCESSO         Int?
+  OBSERVACAOETIQUETA String?  @db.VarChar(100)
+
+  @@index([IDAPLICACAO])
+  @@index([IDARQUIVOMESACORTE])
+  @@index([IDPROCESSO])
+  @@index([IDPROJETOMODELO])
+}
+
+model posicao_peca_modelo {
+  IDPOSICAOPECAMODELO Int     @id @default(autoincrement())
+  IDPROJETOMODELO     Int?
+  COORDX              Int?
+  COORDY              Int?
+  ORIENTACAO          Int?
+  CALC                String? @db.VarChar(255)
+
+  @@index([IDPROJETOMODELO])
+}
+
+model tipo_vidro_projeto_modelo {
+  IdProjetoModelo Int
+  TipoVidro       Int
+
+  @@id([IdProjetoModelo, TipoVidro])
+  @@index([IdProjetoModelo])
+}
+
+model espessura_projeto_modelo {
+  IdProjetoModelo Int
+  Espessura       Int
+
+  @@id([IdProjetoModelo, Espessura])
+  @@index([IdProjetoModelo])
+}
+
+model produto_projeto_tipo_vidro {
+  IdProdutoProjetoTipoVidro Int @id @default(autoincrement())
+  IdProdutoProjeto          Int
+  IdCorVidro                Int
+  IdProduto                 Int
+  TipoVidro                 Int
+
+  @@index([IdProdutoProjeto])
+}
+
+model tabela_desconto_acrescimo_cliente {
+  IDTABELADESCONTO       Int       @id @default(autoincrement())
+  DESCRICAO              String?   @db.VarChar(30)
+  SITUACAO               Int       @default(1)
+  PROMOCIONAL            Boolean?  @default(false)
+  DATAPROMOCIONALINICIAL DateTime?
+  DATAPROMOCIONALFINAL   DateTime?
+
+  @@index([DATAPROMOCIONALFINAL])
+  @@index([DATAPROMOCIONALINICIAL])
+}
+
+model desconto_acrescimo_cliente {
+  IDDESCONTO             Int      @id @default(autoincrement())
+  IDCLIENTE              Int?
+  IDGRUPOPROD            Int?
+  desconto               Float?
+  IDSUBGRUPOPROD         Int?
+  IDPROD                 Int?
+  APLICARBENEFICIAMENTOS Boolean?
+  acrescimo              Float?
+  IDTABELADESCONTO       Int?
+  DESCONTOAVISTA         Float?
+  MaximoVendasCliente    Float?
+
+  @@index([IDCLIENTE])
+  @@index([IDGRUPOPROD])
+  @@index([IDPROD])
+  @@index([IDSUBGRUPOPROD])
+  @@index([IDTABELADESCONTO])
+}
+
+model Notification {
+  uuid      String    @id @default(uuid()) @db.Uuid
+  title     String?   @db.VarChar(200)
+  message   String?   @db.Text
+  read      Boolean   @default(false)
+  // timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relacionamento com usuário
+  userUuid String @db.Uuid
+  user     Users  @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+
+  @@index([userUuid])
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model recebimento {
+  IdRecebimento           Int       @id @default(autoincrement())
+  IdCliente               Int
+  IdLoja                  Int
+  IdFuncionarioCadastro   Int
+  DataCompetencia         DateTime
+  DataRecebimento         DateTime?
+  Total                   Decimal   @db.Decimal(12, 2)
+  Situacao                Int
+  ObservacaoRecebimento   String?   @db.VarChar(1000)
+  CreditoUtilizadoAoCriar Decimal?  @default(0.000) @db.Decimal(12, 3)
+  CreditoGeradoAoCriar    Decimal?  @default(0.000) @db.Decimal(12, 3)
+  ValorCreditoAoCriar     Decimal?  @default(0.000) @db.Decimal(12, 3)
+  RecebimentoCaixaDiario  Int?      @default(0)
+  RecebimentoGerarCredito Int?      @default(0)
+
+  deposito_nao_identificado deposito_nao_identificado[]
+
+  @@index([IdCliente], map: "INDEX_IdCliente")
+  @@index([IdFuncionarioCadastro], map: "INDEX_IdFuncionarioCadastro")
+  @@index([IdLoja], map: "INDEX_IdLoja")
+  @@index([IdRecebimento], map: "INDEX_IdRecebimento")
+  @@index([RecebimentoCaixaDiario], map: "INDEX_RECEBIMENTOCAIXADIARIO")
+  @@index([RecebimentoGerarCredito], map: "INDEX_RECEBIMENTOGERARCREDITO")
+}
+
+model deposito_nao_identificado {
+  IDDEPOSITONAOIDENTIFICADO Int       @id @default(autoincrement())
+  IDCONTABANCO              Int?
+  VALORMOV                  Decimal?  @db.Decimal(12, 2)
+  DATAMOV                   DateTime?
+  OBS                       String?   @db.VarChar(500)
+  IDPEDIDO                  Int?
+  IDLIBERARPEDIDO           Int?
+  IDACERTO                  Int?
+  IDCONTAR                  Int?
+  IDOBRA                    Int?
+  IDSINAL                   Int?
+  IDTROCADEVOLUCAO          Int?
+  IDDEVOLUCAOPAGTO          Int?
+  IDACERTOCHEQUE            Int?
+  SITUACAO                  Int?
+  IDFUNCCAD                 Int?
+  DATACAD                   DateTime?
+  IdTransacaoContaBanco     Int?
+  IdCobrancaPix             Int?
+
+  IDRECEBIMENTO Int?
+  recebimento   recebimento? @relation(fields: [IDRECEBIMENTO], references: [IdRecebimento], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([IDACERTO], map: "INDEX_IDACERTO")
+  @@index([IDACERTOCHEQUE], map: "INDEX_IDACERTOCHEQUE")
+  @@index([IdCobrancaPix], map: "INDEX_IDCOBRANCAPIX")
+  @@index([IDCONTABANCO], map: "INDEX_IDCONTABANCO")
+  @@index([IDCONTAR], map: "INDEX_IDCONTAR")
+  @@index([IDDEVOLUCAOPAGTO], map: "INDEX_IDDEVOLUCAOPAGTO")
+  @@index([IDFUNCCAD], map: "INDEX_IDFUNCCAD")
+  @@index([IDLIBERARPEDIDO], map: "INDEX_IDLIBERARPEDIDO")
+  @@index([IDOBRA], map: "INDEX_IDOBRA")
+  @@index([IDPEDIDO], map: "INDEX_IDPEDIDO")
+  @@index([IDSINAL], map: "INDEX_IDSINAL")
+  @@index([IDTROCADEVOLUCAO], map: "INDEX_IDTROCADEVOLUCAO")
+  @@index([SITUACAO], map: "INDEX_SITUACAO")
+  @@index([IDRECEBIMENTO], map: "fk_idrecebimento")
+}
+
+model configuracao_processo {
+  IdConfiguracaoProcesso Int  @id @default(autoincrement())
+  IdSubgrupo             Int?
+  IdBeneficiamento       Int?
+  CondicaoEspessura      Int?
+  Espessura              Int?
+  CondicaoLarguraInicio  Int?
+  LarguraInicio          Int?
+  CondicaoLarguraFim     Int?
+  LarguraFim             Int?
+  CondicaoAlturaInicio   Int?
+  AlturaInicio           Int?
+  CondicaoAlturaFim      Int?
+  AlturaFim              Int?
+  IdProcesso             Int
+  Sequencia              Int
+
+  @@index([AlturaFim])
+  @@index([AlturaInicio])
+  @@index([CondicaoAlturaFim])
+  @@index([CondicaoAlturaInicio])
+  @@index([CondicaoEspessura])
+  @@index([CondicaoLarguraFim])
+  @@index([CondicaoLarguraInicio])
+  @@index([Espessura])
+  @@index([IdBeneficiamento])
+  @@index([IdProcesso])
+  @@index([IdSubgrupo])
+  @@index([LarguraFim])
+  @@index([LarguraInicio])
+}
+
+model configuracao_processo_aplicacao {
+  IdConfiguracaoProcessoAplicacao Int @id @default(autoincrement())
+  IdConfiguracaoProcesso          Int
+  IdAplicacao                     Int
+
+  @@index([IdAplicacao])
+  @@index([IdConfiguracaoProcesso])
+}
+
+model parcelas_nao_usar {
+  id Int @id @default(autoincrement())
+
+  IDPARCELA Int
+  IDCLIENTE Int?
+  IDFORNEC  Int?
+
+  @@unique([IDPARCELA, IDCLIENTE, IDFORNEC], map: "AK_Key_1")
+  @@unique([IDPARCELA, IDCLIENTE], map: "UNIQUE_INDEX_IDPARCELA_IDCLIENTE")
+  @@index([IDCLIENTE], map: "INDEX_IDCLIENTE")
+  @@index([IDFORNEC], map: "INDEX_IDFORNEC")
+  @@index([IDPARCELA], map: "INDEX_IDPARCELA")
+  @@map("parcelas_nao_usar")
+}
+
+model loja {
+  IDLOJA                               Int       @id @default(autoincrement())
+  RAZAOSOCIAL                          String?   @db.VarChar(50)
+  ENDERECO                             String?   @db.VarChar(50)
+  COMPL                                String?   @db.VarChar(20)
+  BAIRRO                               String?   @db.VarChar(30)
+  CIDADE                               String?   @db.VarChar(30)
+  CEP                                  String?   @db.VarChar(9)
+  TELEFONE                             String?   @db.VarChar(15)
+  CNPJ                                 String?   @db.VarChar(18)
+  INSCEST                              String?   @db.VarChar(20)
+  DATACAD                              DateTime?
+  USUCAD                               Int?
+  NOMEFANTASIA                         String?   @db.VarChar(50)
+  SITE                                 String?   @db.VarChar(50)
+  IDCIDADE                             Int?
+  CNAE                                 String?   @db.VarChar(15)
+  INSCMUNIC                            String?   @db.VarChar(20)
+  NUMERO                               String?   @db.VarChar(10)
+  CRT                                  Int?
+  SENHACERT                            String?   @db.VarChar(30)
+  FAX                                  String?   @db.VarChar(15)
+  TIPO                                 Int?
+  EMAILFISCAL                          String?   @db.VarChar(150)
+  LOGINEMAILFISCAL                     String?   @db.VarChar(150)
+  SENHAEMAILFISCAL                     String?   @db.VarChar(150)
+  SERVIDOREMAILFISCAL                  String?   @db.VarChar(150)
+  TELEFONE2                            String?   @db.VarChar(15)
+  SUFRAMA                              String?   @db.VarChar(9)
+  EMAILCONTATO                         String?   @db.VarChar(150)
+  LOGINEMAILCONTATO                    String?   @db.VarChar(150)
+  SENHAEMAILCONTATO                    String?   @db.VarChar(150)
+  SERVIDOREMAILCONTATO                 String?   @db.VarChar(150)
+  EMAILCOMERCIAL                       String?   @db.VarChar(150)
+  LOGINEMAILCOMERCIAL                  String?   @db.VarChar(150)
+  SENHAEMAILCOMERCIAL                  String?   @db.VarChar(150)
+  SERVIDOREMAILCOMERCIAL               String?   @db.VarChar(150)
+  REGIMELOJA                           Int?
+  TIPOATIVIDADE                        Int?
+  DATAVENCIMENTOCERTIFICADO            DateTime?
+  NIRE                                 String?   @db.VarChar(20)
+  DATANIRE                             DateTime?
+  RNTRC                                String?   @db.VarChar(8)
+  SITUACAO                             Int?
+  IDCSC                                String?   @db.Char(6)
+  CSC                                  String?   @db.VarChar(36)
+  IgnorarBloquearItensCorEspessura     Int?
+  IgnorarLiberarApenasProdutosProntos  Int?
+  CALCULARICMSPEDIDO                   Int?
+  CALCULARIPIPEDIDO                    Int?
+  CALCULARICMSLIBERACAO                Int?
+  CALCULARIPILIBERACAO                 Int?
+  CLASSIFICACAOESTABELECIMENTOIPI      Int?
+  MATRIZ                               Boolean?  @default(false)
+  MERCHANTID                           String?   @db.VarChar(36)
+  MERCHANTKEY                          String?   @db.VarChar(40)
+  CodigoDoEstabelecimento              Int?
+  LOJACONTRATO                         Boolean?  @default(false)
+  CodigoPlanoContaContabilCaixaGeral   String?   @db.VarChar(60)
+  CodigoPlanoContaContabilCaixaDiario  String?   @db.VarChar(60)
+  SeriePadraoNotaFiscal                Int?
+  SeriePadraoNotaFiscalAjuste          Int?
+  SeriePadraoNotaFiscalConsumidorFinal Int?
+  TipoEntrega                          Int?
+  BloquearTipoEntrega                  Boolean   @default(false)
+
+  @@index([IDCIDADE])
+  @@index([NOMEFANTASIA])
+  @@index([RAZAOSOCIAL])
+  @@index([USUCAD])
+}
+
+model GlassRoutingRule {
+  uuid String @id @default(uuid()) @db.Uuid
+
+  subgroup   String? @db.VarChar(100) // SUBGRUPO (ex: TEMPERADO)
+  subgroupId Int?
+
+  finishing   String[]
+  finishingId Int[]
+
+  widthOp  String? @db.VarChar(10) // Operador de largura (ex: >=)
+  widthMin Float? // Valor mínimo largura
+  widthMax Float? // Valor máximo largura
+
+  heightOp  String? @db.VarChar(10) // Operador de altura (ex: <=)
+  heightMin Float? // Valor mínimo altura
+  heightMax Float? // Valor máximo altura
+
+  thickness Float? // ESPESSURA (em mm)
+
+  application   String[] @db.VarChar(255) // APLICAÇÃO (ex: FX)
+  applicationId Int[]
+
+  routeCode   String? @db.VarChar(25) // ROTEIRO (ex: T04.07)
+  routeCodeId Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([subgroup])
+  @@index([subgroupId])
+  @@index([finishing])
+  @@index([finishingId])
+  @@index([routeCode])
+  @@index([routeCodeId])
+  @@index([application])
+  @@index([applicationId])
+  @@map("glassRoutingRules")
+}
+
+model etiqueta_aplicacao {
+  IDAPLICACAO             Int      @id @default(autoincrement())
+  CODINTERNO              String?  @db.VarChar(10)
+  DESCRICAO               String?  @db.VarChar(40)
+  DESTACARETIQUETA        Boolean?
+  GerarFormaInexistente   Boolean  @default(false)
+  SITUACAO                Int?
+  DIASMINIMOS             Int?
+  TIPOPEDIDO              String?  @db.VarChar(10)
+  NAOPERMITIRFASTDELIVERY Boolean?
+}
+
+model etiqueta_processo {
+  IDPROCESSO                 Int      @id @default(autoincrement())
+  CODINTERNO                 String?  @db.VarChar(10)
+  DESCRICAO                  String?  @db.VarChar(40)
+  IDAPLICACAO                Int?
+  DESTACARETIQUETA           Boolean?
+  GerarFormaInexistente      Boolean  @default(false)
+  GERARARQUIVODEMESA         Boolean? @default(true)
+  NUMERODIASUTEISDATAENTREGA Int?
+  TIPOPROCESSO               Int?
+  SITUACAO                   Int?
+  TIPOPEDIDO                 String?  @db.VarChar(10)
+  FORCARGERARSAG             Boolean?
+
+  @@index([IDAPLICACAO], map: "INDEX_IDAPLICACAO")
+}
