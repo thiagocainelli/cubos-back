@@ -1,5 +1,3 @@
-import { TFunction } from 'i18next';
-
 // Prisma
 import prisma from '../../prisma.pg';
 

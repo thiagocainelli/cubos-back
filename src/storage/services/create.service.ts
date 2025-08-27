@@ -5,7 +5,7 @@ import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
 import { ReadStorageDto } from '../dtos/readStorage.dto';
 import { CreateStorageDto } from '../dtos/createStorage.dto';
 
-import { UploadFileS3DigitalOceanService } from '../../integrations/s3-digitalOcean/s3-digitalOcean.service';
+import { UploadFileCloudflareR2Service } from '../../integrations/s3-digitalOcean/s3-r2.service';
 
 export const createStorageService = async (
   createStorageDto: CreateStorageDto,
@@ -22,12 +22,7 @@ export const createStorageService = async (
 
     const path = createStorageDto.type || 'general';
 
-    const uploadResult = await UploadFileS3DigitalOceanService.uploadFile(
-      uniqueFileName,
-      file,
-      false, // privateArchive = false
-      path,
-    );
+    const uploadResult = await UploadFileCloudflareR2Service.uploadFile(uniqueFileName, file, path);
 
     // Criar registro no banco de dados
     const storageData = await prisma.storage.create({

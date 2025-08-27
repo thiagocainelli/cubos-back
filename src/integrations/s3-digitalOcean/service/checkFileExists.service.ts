@@ -1,19 +1,18 @@
 import { HeadObjectCommand } from '@aws-sdk/client-s3';
 import { HttpException } from '../../../_common/exceptions/httpException';
-import { s3ClientDigitalOceanConstant } from '../constants/s3-digitalOcean.constant';
+import { s3ClientCloudflareR2Constant } from '../constants/s3-r2.constant';
 
-export const checkFileExistsDigitalOceanService = async (key: string): Promise<boolean> => {
+export const checkFileExistsCloudflareR2Service = async (key: string): Promise<boolean> => {
   try {
-    const { s3ClientDigitalOcean, digitalOceanBucket, cdnEndpoint } =
-      await s3ClientDigitalOceanConstant();
+    const { s3ClientR2, r2Bucket, cdnEndpoint } = await s3ClientCloudflareR2Constant();
 
-    if (s3ClientDigitalOcean && digitalOceanBucket && cdnEndpoint) {
+    if (s3ClientR2 && r2Bucket && cdnEndpoint) {
       const params = {
-        Bucket: digitalOceanBucket,
+        Bucket: r2Bucket,
         Key: key,
       };
 
-      await s3ClientDigitalOcean.send(new HeadObjectCommand(params));
+      await s3ClientR2.send(new HeadObjectCommand(params));
       return true;
     }
 
@@ -25,7 +24,7 @@ export const checkFileExistsDigitalOceanService = async (key: string): Promise<b
 
     throw new HttpException(
       500,
-      `Erro ao verificar existência de arquivo no DigitalOcean Spaces: ${error}`,
+      `Erro ao verificar existência de arquivo no Cloudflare R2: ${error}`,
     );
   }
 };

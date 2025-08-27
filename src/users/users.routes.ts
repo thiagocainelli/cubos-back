@@ -1,4 +1,4 @@
-import express from 'express';
+import { Router } from 'express';
 import { validationMiddleware } from '../_core/middlewares/validation.middleware';
 
 // Controllers
@@ -22,7 +22,7 @@ import { UpdateUsersDto } from './dtos/updateUsers.dto';
 import { UpdatePasswordDto } from './dtos/updatePassword.dto';
 import { ResetPasswordDto } from './dtos/resetPassword.dto';
 
-const router = express.Router();
+const router = Router();
 
 /**
  * @swagger

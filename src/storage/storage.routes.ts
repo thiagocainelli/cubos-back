@@ -1,10 +1,10 @@
-import express from 'express';
+import { Router } from 'express';
 import multer from 'multer';
 import { createStorage, viewStorage, deleteStorage } from './storage.controller';
 
 import { authenticateJWT } from '../_core/middlewares/auth.middleware';
 
-const router = express.Router();
+const router = Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),

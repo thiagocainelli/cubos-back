@@ -5,20 +5,18 @@
       "type": "node",
       "request": "launch",
       "name": "Debug Express API",
-      "args": [
-        "${workspaceFolder}/src/server.ts"
-      ],
-      "runtimeArgs": [
-        "--nolazy",
-        "-r",
-        "ts-node/register"
-      ],
-      "runtimeExecutable": "ts-node-dev",
+      "program": "${workspaceFolder}/src/server.ts",
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "runtimeExecutable": "node",
       "sourceMaps": true,
       "envFile": "${workspaceFolder}/.env",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_ENV": "development"
+      }
     }
   ]
 }

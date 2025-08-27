@@ -1,33 +1,35 @@
 import { GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { HttpException } from '../../../_common/exceptions/httpException';
-import { s3ClientDigitalOceanConstant } from '../constants/s3-digitalOcean.constant';
+import { s3ClientCloudflareR2Constant } from '../constants/s3-r2.constant';
 
-export const downloadFileDigitalOceanService = async (key: string): Promise<Buffer | null> => {
+export const downloadFileCloudflareR2Service = async (key: string): Promise<Buffer | null> => {
   try {
-    const { s3ClientDigitalOcean, digitalOceanBucket, cdnEndpoint } =
-      await s3ClientDigitalOceanConstant();
+    const { s3ClientR2, r2Bucket, cdnEndpoint } = await s3ClientCloudflareR2Constant();
 
-    if (!s3ClientDigitalOcean || !digitalOceanBucket) {
-      throw new HttpException(500, 'Configuração do DigitalOcean não encontrada');
+    if (!s3ClientR2 || !r2Bucket) {
+      throw new HttpException(
+        500,
+        'Configuração do Cloudflare R2 não encontrada. Contacte o administrador do sistema.',
+      );
     }
 
     try {
       const headCommand = new HeadObjectCommand({
-        Bucket: digitalOceanBucket,
+        Bucket: r2Bucket,
         Key: key,
       });
 
-      await s3ClientDigitalOcean.send(headCommand);
+      await s3ClientR2.send(headCommand);
     } catch (headError: any) {
       throw new HttpException(404, `Arquivo não encontrado no bucket: ${headError.message}`);
     }
 
     const command = new GetObjectCommand({
-      Bucket: digitalOceanBucket,
+      Bucket: r2Bucket,
       Key: key,
     });
 
-    const response = await s3ClientDigitalOcean.send(command);
+    const response = await s3ClientR2.send(command);
 
     if (!response.Body) {
       return null;
@@ -54,9 +56,6 @@ export const downloadFileDigitalOceanService = async (key: string): Promise<Buff
       });
     });
   } catch (error) {
-    throw new HttpException(
-      500,
-      `Erro ao fazer download do arquivo no DigitalOcean Spaces: ${error}`,
-    );
+    throw new HttpException(500, `Erro ao fazer download do arquivo no Cloudflare R2: ${error}`);
   }
 };

@@ -1,4 +1,4 @@
-import express from 'express';
+import { Router } from 'express';
 import { validationMiddleware } from '../middlewares/validation.middleware';
 import { login, refreshToken, verifyToken } from './auth.controller';
 
@@ -6,7 +6,7 @@ import { LoginDto } from './dtos/login.dto';
 import { authenticateJWT } from '../middlewares/auth.middleware';
 import { RefreshTokenAuthDto } from './dtos/refresh-token-auth.dto';
 
-const router = express.Router();
+const router = Router();
 
 /**
  * @swagger

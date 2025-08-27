@@ -43,20 +43,6 @@ export const deleteMovies = async (_req: Request, _res: Response) => {
   _res.status(200).json(response);
 };
 
-export const findMoviesByGenre = async (_req: Request, _res: Response): Promise<void> => {
-  const genre = _req.query.genre as string;
-  const response = await MoviesService.findByGenre(genre);
-
-  _res.json(response);
-};
-
-export const findMoviesBySituation = async (_req: Request, _res: Response): Promise<void> => {
-  const situation = _req.query.situation as string;
-  const response = await MoviesService.findBySituation(situation);
-
-  _res.json(response);
-};
-
 export const updateMovieRating = async (_req: Request, _res: Response) => {
   const movieUuid = _req.query.uuid as string;
   const updateRatingDto = _req.body;
