@@ -1,5 +1,3 @@
-import { TFunction } from 'i18next';
-
 // Validator
 import { isUUID } from 'class-validator';
 
@@ -10,27 +8,24 @@ import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
 // Prisma
 import prisma from '../../_core/prisma.pg';
 
-// DTOs e Enums
-import { UserRoleEnum } from '../enum/userType.enum';
 import { ReadUsersDto } from '../dtos/readUsers.dto';
 import { UpdateUsersDto } from '../dtos/updateUsers.dto';
 
 export const updateUsersService = async (
-  t: TFunction,
-  usersReq: ReadUsersDto | undefined,
   uuid: string,
   updateUsersDto: UpdateUsersDto,
 ): Promise<ReadUsersDto | undefined> => {
   if (!uuid) {
-    throw new HttpException(400, 'UUID is required');
+    throw new HttpException(400, 'UUID do usuário é obrigatório');
   }
   if (!isUUID(uuid)) {
-    throw new HttpException(400, 'Invalid UUID');
+    throw new HttpException(400, 'UUID do usuário inválido');
   }
 
   const checkUser = await prisma.users.findUnique({
     where: {
       email: updateUsersDto.email,
+      deletedAt: null,
     },
   });
 
@@ -45,7 +40,6 @@ export const updateUsersService = async (
       },
       data: {
         ...updateUsersDto,
-        role: UserRoleEnum[updateUsersDto.type],
       },
     });
 
@@ -55,12 +49,9 @@ export const updateUsersService = async (
 
     return <ReadUsersDto>{
       uuid: usersData.uuid,
-      IDFUNC: usersData.IDFUNC,
       name: usersData.name,
       email: usersData.email,
       type: usersData.type,
-      active: usersData.active,
-      profileImage: usersData.profileImage,
       createdAt: usersData.createdAt,
       updatedAt: usersData.updatedAt,
       deletedAt: usersData.deletedAt,

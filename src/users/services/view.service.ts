@@ -1,5 +1,3 @@
-import { TFunction } from 'i18next';
-
 // Prisma
 import prisma from '../../_core/prisma.pg';
 
@@ -11,22 +9,19 @@ import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
 import { ReadUsersDto } from '../dtos/readUsers.dto';
 import { isUUID } from 'class-validator';
 
-export const viewUsersService = async (
-  t: TFunction,
-  usersReq: ReadUsersDto | undefined,
-  uuid: string,
-): Promise<ReadUsersDto | undefined> => {
+export const viewUsersService = async (uuid: string): Promise<ReadUsersDto | undefined> => {
   try {
     if (!uuid) {
-      throw new HttpException(400, 'UUID is required');
+      throw new HttpException(400, 'UUID do usuário é obrigatório');
     }
     if (!isUUID(uuid)) {
-      throw new HttpException(400, 'Invalid UUID');
+      throw new HttpException(400, 'UUID do usuário inválido');
     }
 
     const usersData = await prisma.users.findUnique({
       where: {
         uuid: uuid,
+        deletedAt: null,
       },
     });
 
@@ -36,12 +31,9 @@ export const viewUsersService = async (
 
     return <ReadUsersDto>{
       uuid: usersData.uuid,
-      IDFUNC: usersData.IDFUNC,
       name: usersData.name,
       email: usersData.email,
       type: usersData.type,
-      active: usersData.active,
-      profileImage: usersData.profileImage,
       createdAt: usersData.createdAt,
       updatedAt: usersData.updatedAt,
       deletedAt: usersData.deletedAt,

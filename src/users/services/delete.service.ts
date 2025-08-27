@@ -11,16 +11,12 @@ import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
 import { ReadUsersDto } from '../dtos/readUsers.dto';
 import { isUUID } from 'class-validator';
 
-export const deleteUsersService = async (
-  t: TFunction,
-  usersReq: ReadUsersDto | undefined,
-  uuid: string,
-): Promise<ReadUsersDto | undefined> => {
+export const deleteUsersService = async (uuid: string): Promise<ReadUsersDto | undefined> => {
   if (!uuid) {
-    throw new HttpException(400, 'UUID is required');
+    throw new HttpException(400, 'UUID é obrigatório');
   }
   if (!isUUID(uuid)) {
-    throw new HttpException(400, 'Invalid UUID');
+    throw new HttpException(400, 'UUID inválido');
   }
 
   const existingUser = await prisma.users.findFirst({
@@ -31,7 +27,7 @@ export const deleteUsersService = async (
   });
 
   if (!existingUser) {
-    throw new HttpException(404, 'User not found or already deleted');
+    throw new HttpException(404, 'Usuário não encontrado ou já deletado');
   }
 
   try {
@@ -41,17 +37,14 @@ export const deleteUsersService = async (
     });
 
     if (!usersData) {
-      throw new HttpException(404, 'User not found');
+      throw new HttpException(404, 'Erro ao deletar usuário');
     }
 
     return <ReadUsersDto>{
       uuid: usersData.uuid,
-      IDFUNC: usersData.IDFUNC,
       name: usersData.name,
       email: usersData.email,
       type: usersData.type,
-      active: usersData.active,
-      profileImage: usersData.profileImage,
       createdAt: usersData.createdAt,
       updatedAt: usersData.updatedAt,
       deletedAt: usersData.deletedAt,

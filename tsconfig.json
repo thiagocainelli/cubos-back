@@ -14,7 +14,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["node", "express", "multer"],
-    "typeRoots": ["./src/types", "./node_modules/@types"]
+    "typeRoots": ["./types", "./src/types", "./node_modules/@types"]
   },
-  "include": ["src"]
+  "include": ["src", "types"]
 }

@@ -41,21 +41,10 @@ import { IsIntPropertyDecorator } from '../../_common/decorators/dtoProperties/i
  *           required: true
  *         type:
  *           type: string
- *           enum: [superAdmin, admin, user]
+ *           enum: [superAdmin, users]
  *           description: User type
- *           example: "user"
+ *           example: "users"
  *           required: true
- *         profileImage:
- *           type: string
- *           format: url
- *           description: User profile image
- *           example: "https://example.com/profile.jpg"
- *           required: false
- *         active:
- *           type: boolean
- *           description: Whether the user is active
- *           example: true
- *           required: false
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -77,13 +66,6 @@ export class ReadUsersDto {
   })
   uuid!: string;
 
-  @IsIntPropertyDecorator({
-    description: 'User IDFUNC',
-    example: 1,
-    required: true,
-  })
-  IDFUNC!: number;
-
   @IsStringPropertyDecorator({
     description: 'User name',
     example: 'John Doe',
@@ -98,13 +80,6 @@ export class ReadUsersDto {
   })
   email!: string;
 
-  @IsIntPropertyDecorator({
-    description: 'User ID',
-    example: 1,
-    required: true,
-  })
-  ID_FUNC!: number;
-
   @IsEnumPropertyDecorator({
     description: 'User type',
     example: 'user',
@@ -113,20 +88,6 @@ export class ReadUsersDto {
     enumName: 'UserType',
   })
   type!: UserTypeEnum;
-
-  @IsUrlPropertyDecorator({
-    description: 'User profileImage',
-    example: 'https://example.com/profile.jpg',
-    required: false,
-  })
-  profileImage!: string;
-
-  @IsBooleanPropertyDecorator({
-    description: 'Whether the user is active',
-    required: false,
-    example: true,
-  })
-  active!: boolean;
 
   @IsDateStringPropertyDecorator({
     description: 'User created at',

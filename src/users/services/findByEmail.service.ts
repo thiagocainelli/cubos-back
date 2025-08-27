@@ -11,37 +11,31 @@ import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
 import { ReadUsersDto } from '../dtos/readUsers.dto';
 import { isEmail } from 'class-validator';
 
-export const findByEmailUsersService = async (
-  t: TFunction,
-  usersReq: ReadUsersDto | undefined,
-  email: string,
-): Promise<ReadUsersDto | undefined> => {
+export const findByEmailUsersService = async (email: string): Promise<ReadUsersDto | undefined> => {
   try {
     if (!email) {
-      throw new HttpException(400, 'Email is required');
+      throw new HttpException(400, 'Email é obrigatório');
     }
     if (!isEmail(email)) {
-      throw new HttpException(400, 'Invalid email');
+      throw new HttpException(400, 'Email inválido');
     }
 
     const usersData = await prisma.users.findUnique({
       where: {
         email: email,
+        deletedAt: null,
       },
     });
 
     if (!usersData) {
-      throw new HttpException(404, 'User not found');
+      throw new HttpException(404, 'Usuário não encontrado');
     }
 
     return <ReadUsersDto>{
       uuid: usersData.uuid,
-      IDFUNC: usersData.IDFUNC,
       name: usersData.name,
       email: usersData.email,
       type: usersData.type,
-      active: usersData.active,
-      profileImage: usersData.profileImage,
       createdAt: usersData.createdAt,
       updatedAt: usersData.updatedAt,
       deletedAt: usersData.deletedAt,

@@ -1,8 +1,5 @@
-import { TFunction } from 'i18next';
-
 // Prisma
 import prisma from '../../_core/prisma.pg';
-import { Prisma } from '../../../prisma-outputs/postgres-client';
 
 // HttpException
 import { HttpException } from '../../_common/exceptions/httpException';
@@ -12,22 +9,19 @@ import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
 import { ListUsersDto } from '../dtos/listUsers.dto';
 import { ReadUsersDto } from '../dtos/readUsers.dto';
 import { UserTypeEnum } from '../enum/userType.enum';
-import { isBoolean } from 'class-validator';
+import { Prisma } from '../../../prisma-outputs/postgres-client';
 
 export const listUsersService = async (
-  t: TFunction,
-  usersReq: ReadUsersDto | undefined,
   page: number,
   itemsPerPage: number,
   search?: string,
   type?: string,
-  active?: boolean,
 ): Promise<ListUsersDto | undefined> => {
   if (!page) {
-    throw new HttpException(400, 'Page is required');
+    throw new HttpException(400, 'Página é obrigatória');
   }
   if (!itemsPerPage) {
-    throw new HttpException(400, 'Items per page is required');
+    throw new HttpException(400, 'Itens por página é obrigatório');
   }
 
   const skip = Number((page - 1) * itemsPerPage);
@@ -36,9 +30,6 @@ export const listUsersService = async (
   const whereClause: Prisma.UsersWhereInput = {
     AND: [],
     deletedAt: null,
-    NOT: {
-      type: UserTypeEnum.representative,
-    },
   };
   whereClause.AND = [];
 
@@ -58,12 +49,6 @@ export const listUsersService = async (
     });
   }
 
-  if (isBoolean(active)) {
-    whereClause.AND.push({
-      active: active,
-    });
-  }
-
   try {
     const total = await prisma.users.count({
       where: whereClause,
@@ -72,7 +57,7 @@ export const listUsersService = async (
     const usersList = await prisma.users.findMany({
       orderBy: [
         {
-          createdAt: 'desc',
+          name: 'asc',
         },
       ],
       where: whereClause,
@@ -84,12 +69,9 @@ export const listUsersService = async (
       data: usersList.map((usersData) => {
         return <ReadUsersDto>{
           uuid: usersData.uuid,
-          IDFUNC: usersData.IDFUNC,
           name: usersData.name,
           email: usersData.email,
           type: usersData.type,
-          active: usersData.active,
-          profileImage: usersData.profileImage,
           createdAt: usersData.createdAt,
           updatedAt: usersData.updatedAt,
           deletedAt: usersData.deletedAt,

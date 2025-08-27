@@ -6,8 +6,7 @@ import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
 import prisma from '../../_core/prisma.pg';
 
 // DTOs e Enums
-import { CreateUsersDto } from '../dtos/createUsers.dto';
-import { UserRoleEnum, UserTypeEnum } from '../enum/userType.enum';
+import { UserTypeEnum } from '../enum/userType.enum';
 
 // Utils
 import { encryptPassword } from '../../_common/utils/crypto.utils';
@@ -23,7 +22,7 @@ export const initSuperAdmin = async (): Promise<void> => {
 
   try {
     const existingUser = await prisma.users.findUnique({
-      where: { email: emailSuperAdmin.toLowerCase() },
+      where: { email: emailSuperAdmin.toLowerCase(), deletedAt: null },
     });
 
     const encryptedPassword = encryptPassword(passwordSuperAdmin);
@@ -32,10 +31,9 @@ export const initSuperAdmin = async (): Promise<void> => {
       name: 'Super Admin',
       email: emailSuperAdmin.toLowerCase(),
       type: UserTypeEnum.superAdmin,
-      profileImage: '',
     };
 
-    let user: Users;
+    let user: Users | null;
 
     if (existingUser) {
       user = await prisma.users.update({
@@ -44,7 +42,6 @@ export const initSuperAdmin = async (): Promise<void> => {
           name: superAdminData.name,
           password: encryptedPassword,
           type: superAdminData.type,
-          role: UserRoleEnum[superAdminData.type],
         },
       });
     } else {
@@ -52,7 +49,6 @@ export const initSuperAdmin = async (): Promise<void> => {
         data: {
           ...superAdminData,
           password: encryptedPassword,
-          role: UserRoleEnum[superAdminData.type],
         },
       });
     }

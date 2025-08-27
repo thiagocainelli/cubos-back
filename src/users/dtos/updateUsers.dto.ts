@@ -14,7 +14,6 @@ import { UserTypeEnum } from '../enum/userType.enum';
  *       required:
  *         - name
  *         - email
- *         - type
  *       properties:
  *         name:
  *           type: string
@@ -31,18 +30,6 @@ import { UserTypeEnum } from '../enum/userType.enum';
  *           type: string
  *           description: User password
  *           example: "Exemplo@123"
- *           required: false
- *         type:
- *           type: string
- *           enum: [superAdmin, admin, user]
- *           description: User type
- *           example: "user"
- *           required: true
- *         profileImage:
- *           type: string
- *           format: url
- *           description: User profile image
- *           example: "https://example.com/profile.jpg"
  *           required: false
  */
 export class UpdateUsersDto {
@@ -66,20 +53,4 @@ export class UpdateUsersDto {
     required: false,
   })
   password!: string;
-
-  @IsEnumPropertyDecorator({
-    description: 'User type',
-    example: 'user',
-    required: true,
-    enum: UserTypeEnum,
-    enumName: 'UserType',
-  })
-  type!: UserTypeEnum;
-
-  @IsUrlPropertyDecorator({
-    description: 'User profileImage',
-    example: 'https://example.com/profile.jpg',
-    required: false,
-  })
-  profileImage!: string;
 }

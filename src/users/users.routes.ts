@@ -9,15 +9,12 @@ import {
   viewUsers,
   updatePassword,
   deleteUsers,
-  listDeletedUsers,
   findUserByEmail,
   resetPassword,
 } from './users.controller';
 
 // Middlewares
 import { authenticateJWT } from '../_core/middlewares/auth.middleware';
-import { auditAfterAuthMiddleware } from '../_core/middlewares/auditRequest.middleware';
-import { auditResponseMiddleware } from '../_core/middlewares/auditResponse.middleware';
 
 // DTOs
 import { CreateUsersDto } from './dtos/createUsers.dto';
@@ -108,14 +105,7 @@ router.get('/list', authenticateJWT, listUsers);
  *             schema:
  *               $ref: '#/components/schemas/ReadUsersDto'
  */
-router.post(
-  '/create',
-  authenticateJWT,
-  auditAfterAuthMiddleware,
-  auditResponseMiddleware,
-  validationMiddleware(CreateUsersDto),
-  createUsers,
-);
+router.post('/create', authenticateJWT, validationMiddleware(CreateUsersDto), createUsers);
 
 /**
  * @swagger
@@ -147,14 +137,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/ReadUsersDto'
  */
-router.put(
-  '/update',
-  authenticateJWT,
-  auditAfterAuthMiddleware,
-  auditResponseMiddleware,
-  validationMiddleware(UpdateUsersDto),
-  updateUsers,
-);
+router.put('/update', authenticateJWT, validationMiddleware(UpdateUsersDto), updateUsers);
 
 /**
  * @swagger
@@ -224,8 +207,6 @@ router.get('/view', authenticateJWT, viewUsers);
 router.put(
   '/change-password',
   authenticateJWT,
-  auditAfterAuthMiddleware,
-  auditResponseMiddleware,
   validationMiddleware(UpdatePasswordDto),
   updatePassword,
 );
@@ -266,8 +247,6 @@ router.put(
 router.put(
   '/reset-password',
   authenticateJWT,
-  auditAfterAuthMiddleware,
-  auditResponseMiddleware,
   validationMiddleware(ResetPasswordDto),
   resetPassword,
 );
@@ -296,59 +275,7 @@ router.put(
  *             schema:
  *               $ref: '#/components/schemas/ReadUsersDto'
  */
-router.delete(
-  '/delete',
-  authenticateJWT,
-  auditAfterAuthMiddleware,
-  auditResponseMiddleware,
-  deleteUsers,
-);
-
-/**
- * @swagger
- * /api/v1/users/list-deleted:
- *   get:
- *     summary: List deleted users
- *     tags: [Users]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         required: true
- *         description: Page number for pagination
- *       - in: query
- *         name: itemsPerPage
- *         schema:
- *           type: integer
- *           default: 20
- *         required: true
- *         description: Number of items per page
- *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *         required: false
- *         description: Search term for filtering users by name or email
- *       - in: query
- *         name: type
- *         schema:
- *           type: string
- *           enum: [admin, user]
- *         required: false
- *         description: Filter users by type (admin, user)
- *     responses:
- *       200:
- *         description: List of deleted users
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ListUsersDto'
- */
-router.get('/list-deleted', authenticateJWT, listDeletedUsers);
+router.delete('/delete', authenticateJWT, deleteUsers);
 
 /**
  * @swagger

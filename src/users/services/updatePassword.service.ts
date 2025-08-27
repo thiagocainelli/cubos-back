@@ -1,5 +1,3 @@
-import { TFunction } from 'i18next';
-
 // Validator
 import { isUUID } from 'class-validator';
 
@@ -18,25 +16,23 @@ import { ReadUsersDto } from '../dtos/readUsers.dto';
 import { UpdatePasswordDto } from '../dtos/updatePassword.dto';
 
 export const updatePasswordService = async (
-  t: TFunction,
-  usersReq: ReadUsersDto | undefined,
   userUuid: string,
   updatePasswordDto: UpdatePasswordDto,
 ): Promise<ReadUsersDto | undefined> => {
   if (!userUuid) {
-    throw new HttpException(400, 'User UUID is required');
+    throw new HttpException(400, 'UUID do usuário é obrigatório');
   }
   if (!isUUID(userUuid)) {
-    throw new HttpException(400, 'Invalid user UUID');
+    throw new HttpException(400, 'UUID do usuário inválido');
   }
 
   const user = await prisma.users.findUnique({
-    where: { uuid: userUuid },
+    where: { uuid: userUuid, deletedAt: null },
     select: { password: true },
   });
 
   if (!user || !user.password) {
-    throw new HttpException(404, 'User not found');
+    throw new HttpException(404, 'Usuário não encontrado');
   }
 
   // Verify if current password matches
@@ -61,12 +57,9 @@ export const updatePasswordService = async (
 
     return <ReadUsersDto>{
       uuid: usersData.uuid,
-      IDFUNC: usersData.IDFUNC,
       name: usersData.name,
       email: usersData.email,
       type: usersData.type,
-      active: usersData.active,
-      profileImage: usersData.profileImage,
       createdAt: usersData.createdAt,
       updatedAt: usersData.updatedAt,
       deletedAt: usersData.deletedAt,

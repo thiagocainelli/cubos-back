@@ -1,9 +1,7 @@
-import { IsBooleanPropertyDecorator } from '../../_common/decorators/dtoProperties/isBoolean-property.decorator';
 import { IsDateStringPropertyDecorator } from '../../_common/decorators/dtoProperties/isDateString-property.decorator';
 import { IsEmailPropertyDecorator } from '../../_common/decorators/dtoProperties/isEmail-property.decorator';
 import { IsEnumPropertyDecorator } from '../../_common/decorators/dtoProperties/isEnum-property.decorator';
 import { IsStringPropertyDecorator } from '../../_common/decorators/dtoProperties/isString-property.decorator';
-import { IsUrlPropertyDecorator } from '../../_common/decorators/dtoProperties/isUrl-property.decorator';
 
 import { UserTypeEnum } from '../enum/userType.enum';
 
@@ -37,19 +35,9 @@ import { UserTypeEnum } from '../enum/userType.enum';
  *           example: "john.doe@example.com"
  *         type:
  *           type: string
- *           enum: [superAdmin, admin, user]
+ *           enum: [superAdmin, users]
  *           description: User type
- *           example: "user"
- *         profileImage:
- *           type: string
- *           format: url
- *           description: User profile image
- *           example: "https://example.com/profile.jpg"
- *           required: false
- *         active:
- *           type: boolean
- *           description: Whether the user is active
- *           example: true
+ *           example: "users"
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -96,20 +84,6 @@ export class ReadUserForDecoratorDto {
     enumName: 'UserType',
   })
   type!: UserTypeEnum;
-
-  @IsUrlPropertyDecorator({
-    description: 'User profileImage',
-    example: 'https://example.com/profile.jpg',
-    required: false,
-  })
-  profileImage!: string;
-
-  @IsBooleanPropertyDecorator({
-    description: 'Whether the user is active',
-    required: false,
-    example: true,
-  })
-  active!: boolean;
 
   @IsDateStringPropertyDecorator({
     description: 'User created at',
