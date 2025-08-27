@@ -1,27 +1,16 @@
-import { TFunction } from 'i18next';
 import { isUUID } from 'class-validator';
-
-// Prisma
 import prisma from '../../_core/prisma.pg';
-
-// HttpException
 import { HttpException } from '../../_common/exceptions/httpException';
 import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
 
-// DTOs
 import { ReadStorageDto } from '../dtos/readStorage.dto';
-import { ReadUsersDto } from '../../users/dtos/readUsers.dto';
 
-export const deleteStorageService = async (
-  t: TFunction,
-  usersReq: ReadUsersDto | undefined,
-  uuid: string,
-): Promise<ReadStorageDto | undefined> => {
+export const deleteStorageService = async (uuid: string): Promise<ReadStorageDto | undefined> => {
   if (!uuid) {
-    throw new HttpException(400, 'UUID is required');
+    throw new HttpException(400, 'UUID do arquivo é obrigatório');
   }
   if (!isUUID(uuid)) {
-    throw new HttpException(400, 'Invalid UUID');
+    throw new HttpException(400, 'UUID do arquivo é inválido');
   }
 
   const existingStorage = await prisma.storage.findFirst({
@@ -32,7 +21,7 @@ export const deleteStorageService = async (
   });
 
   if (!existingStorage) {
-    throw new HttpException(404, 'Storage not found or already deleted');
+    throw new HttpException(404, 'Arquivo não encontrado ou já deletado');
   }
 
   try {
@@ -42,7 +31,7 @@ export const deleteStorageService = async (
     });
 
     if (!storageData) {
-      throw new HttpException(404, 'Storage not found');
+      throw new HttpException(404, 'Arquivo não encontrado');
     }
 
     return <ReadStorageDto>{

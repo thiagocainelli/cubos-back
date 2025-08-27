@@ -66,6 +66,13 @@ model Movies {
   releaseDate       DateTime?       @db.Timestamp(6)
   durationInMinutes Int?
   genre             String[]
+
+  // Timestamps
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
   posterUuid        String?         @db.Uuid
   userUuid          String?         @db.Uuid
   poster            Storage?        @relation("MoviePoster", fields: [posterUuid], references: [uuid])

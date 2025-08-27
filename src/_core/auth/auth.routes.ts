@@ -1,10 +1,7 @@
 import express from 'express';
 import { validationMiddleware } from '../middlewares/validation.middleware';
-
-// Controllers
 import { login, refreshToken, verifyToken } from './auth.controller';
 
-// DTOs
 import { LoginDto } from './dtos/login.dto';
 import { authenticateJWT } from '../middlewares/auth.middleware';
 import { RefreshTokenAuthDto } from './dtos/refresh-token-auth.dto';

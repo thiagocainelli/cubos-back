@@ -11,6 +11,7 @@ import { setupSwagger } from './_core/swagger';
 import userRoutes from './users/users.routes';
 import authRoutes from './_core/auth/auth.routes';
 import storageRoutes from './storage/storage.routes';
+import movieRoutes from './movies/movies.routes';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.get('/', (_req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/storage', storageRoutes);
+app.use('/api/v1/movies', movieRoutes);
 
 setupSwagger(app);
 

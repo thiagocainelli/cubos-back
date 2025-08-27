@@ -20,8 +20,6 @@ import { ReadUsersDto } from '../../../users/dtos/readUsers.dto';
 import { RefreshTokenAuthDto } from '../dtos/refresh-token-auth.dto';
 
 export const refreshTokenService = async (
-  t: TFunction,
-  usersReq: ReadUsersDto | undefined,
   refreshTokenAuthDto: RefreshTokenAuthDto,
 ): Promise<ReadLoginResponseDto | undefined> => {
   if (!refreshTokenAuthDto.refreshToken) {
@@ -41,10 +39,6 @@ export const refreshTokenService = async (
     throw new HttpException(404, 'Usuário não encontrado');
   }
 
-  if (!usersData.active) {
-    throw new HttpException(401, 'Usuário não está ativo');
-  }
-
   const token = generateJwtToken({ sub: usersData.uuid });
   const refreshToken = generateRefreshJwtToken({ sub: usersData.uuid });
 
@@ -57,12 +51,9 @@ export const refreshTokenService = async (
     refreshToken: refreshToken,
     usersData: <ReadUsersDto>{
       uuid: usersData.uuid,
-      IDFUNC: usersData.IDFUNC,
       name: usersData.name,
       email: usersData.email,
       type: usersData.type,
-      active: usersData.active,
-      profileImage: usersData.profileImage,
       createdAt: usersData.createdAt,
       updatedAt: usersData.updatedAt,
       deletedAt: usersData.deletedAt,

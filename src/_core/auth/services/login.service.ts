@@ -1,4 +1,3 @@
-
 // Prisma
 import prisma from '../../prisma.pg';
 
@@ -23,10 +22,6 @@ export const loginService = async (
     throw new HttpException(404, 'Usuário não encontrado');
   }
 
-  if (!usersData.active) {
-    throw new HttpException(401, 'Usuário não está ativo');
-  }
-
   if (!usersData.password) {
     throw new HttpException(401, 'Credenciais inválidas');
   }
@@ -49,12 +44,9 @@ export const loginService = async (
     refreshToken: refreshToken,
     usersData: <ReadUsersDto>{
       uuid: usersData.uuid,
-      IDFUNC: usersData.IDFUNC,
       name: usersData.name,
       email: usersData.email,
       type: usersData.type,
-      active: usersData.active,
-      profileImage: usersData.profileImage,
       createdAt: usersData.createdAt,
       updatedAt: usersData.updatedAt,
       deletedAt: usersData.deletedAt,
