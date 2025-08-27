@@ -46,6 +46,7 @@
     "puppeteer": "^24.13.0",
     "pusher": "^5.2.0",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.0.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",

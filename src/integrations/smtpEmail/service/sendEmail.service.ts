@@ -1,46 +1,38 @@
-import { smtpEmailConstant } from '../constants/smtp.constant';
+import { CreateEmailResponseSuccess, Resend } from 'resend';
 
 export const sendEmailService = async (
   recipient: string,
   subject: string,
-  typeContent: string, // text or html
   content: string,
-): Promise<string | null> => {
+): Promise<CreateEmailResponseSuccess | null> => {
   try {
-    const { transporter, emailSender } = await smtpEmailConstant();
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const emailSender = process.env.EMAIL_SENDER;
+    const resend = new Resend(resendApiKey);
 
-    if (transporter && emailSender) {
-      let emailOptions: any = null;
-      if (typeContent === 'text') {
-        emailOptions = {
-          from: emailSender,
-          to: recipient,
-          subject: subject,
-          text: content,
-        };
-      } else if (typeContent === 'html') {
-        emailOptions = {
-          from: emailSender,
-          to: recipient,
-          subject: subject,
-          html: content,
-        };
-      }
-
-      if (emailOptions) {
-        await transporter.sendMail(emailOptions);
-        return null;
-      } else {
-        return 'Email options is null - typeContent is not valid';
-      }
-    } else {
-      return 'SMTP config is not valid';
+    if (!resendApiKey || !emailSender) {
+      throw new Error(
+        'Configurações de envio de email não encontradas. Contacte o administrador do sistema.',
+      );
     }
+
+    const emailOptions = {
+      from: emailSender,
+      to: recipient,
+      subject: subject,
+      html: content,
+    };
+
+    const response = await resend.emails.send(emailOptions);
+
+    return response.data;
   } catch (error: any) {
     if (error && error.message) {
       return error.message;
     } else {
-      return 'SMTP config is not valid';
+      throw new Error(
+        'Configurações de envio de email não encontradas. Contacte o administrador do sistema.',
+      );
     }
   }
 };
