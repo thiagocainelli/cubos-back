@@ -46,6 +46,9 @@ export const authenticateJWT = async (
 
     next();
   } catch (err) {
+    if (err instanceof HttpException) {
+      throw err;
+    }
     throw new HttpException(401, 'Token inválido ou expirado');
   }
 };

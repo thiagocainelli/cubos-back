@@ -1,11 +1,8 @@
-import {
-  DeleteMoviesService,
-  ListMoviesService,
-  UpdateMoviesService,
-  UpdateRatingMoviesService,
-  ViewMoviesService,
-} from './services';
 import { CreateMoviesService } from './services/create.service';
+import { ListMoviesService } from './services/list.service';
+import { ViewMoviesService } from './services/view.service';
+import { UpdateMoviesService } from './services/update.service';
+import { DeleteMoviesService } from './services/delete.service';
 
 export class MoviesService {
   static async create(createMoviesDto: any) {
@@ -46,9 +43,5 @@ export class MoviesService {
 
   static async delete(movieUuid: string) {
     return await DeleteMoviesService.execute(movieUuid);
-  }
-
-  static async updateRating(movieUuid: string, updateRatingDto: any) {
-    return await UpdateRatingMoviesService.execute(movieUuid, updateRatingDto);
   }
 }

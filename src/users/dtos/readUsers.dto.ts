@@ -1,12 +1,9 @@
-import { IsUrlPropertyDecorator } from '../../_common/decorators/dtoProperties/isUrl-property.decorator';
 import { IsEnumPropertyDecorator } from '../../_common/decorators/dtoProperties/isEnum-property.decorator';
 import { IsEmailPropertyDecorator } from '../../_common/decorators/dtoProperties/isEmail-property.decorator';
 import { IsStringPropertyDecorator } from '../../_common/decorators/dtoProperties/isString-property.decorator';
-import { IsBooleanPropertyDecorator } from '../../_common/decorators/dtoProperties/isBoolean-property.decorator';
 import { IsDateStringPropertyDecorator } from '../../_common/decorators/dtoProperties/isDateString-property.decorator';
 
 import { UserTypeEnum } from '../enum/userType.enum';
-import { IsIntPropertyDecorator } from '../../_common/decorators/dtoProperties/isInt-property.decorator';
 
 /**
  * @swagger

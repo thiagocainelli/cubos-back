@@ -9,13 +9,11 @@ import {
   updateMovies,
   viewMovies,
   deleteMovies,
-  updateMovieRating,
 } from './movies.controller';
 
 // DTOs
 import { CreateMoviesDto } from './dtos/createMovies.dto';
 import { UpdateMoviesDto } from './dtos/updateMovies.dto';
-import { UpdateRatingDto } from './dtos/updateRating.dto';
 
 const router = Router();
 
@@ -176,42 +174,5 @@ router.get('/view-by-uuid', authenticateJWT, viewMovies);
  *         description: Filme deletado com sucesso
  */
 router.delete('/delete', authenticateJWT, deleteMovies);
-
-/**
- * @swagger
- * /api/v1/movies/update-rating/{uuid}:
- *   put:
- *     summary: Atualizar avaliação do filme
- *     tags: [Movies]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: uuid
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: UUID do filme
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UpdateRatingDto'
- *     responses:
- *       200:
- *         description: Avaliação atualizada com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ReadMoviesDto'
- */
-router.put(
-  '/update-rating',
-  authenticateJWT,
-  validationMiddleware(UpdateRatingDto),
-  updateMovieRating,
-);
 
 export default router;

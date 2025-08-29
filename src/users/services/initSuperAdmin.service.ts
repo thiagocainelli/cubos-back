@@ -1,14 +1,7 @@
-// Exceptions
 import { HttpException } from '../../_common/exceptions/httpException';
 import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
-
-// Prisma
 import prisma from '../../_core/prisma.pg';
-
-// DTOs e Enums
 import { UserTypeEnum } from '../enum/userType.enum';
-
-// Utils
 import { encryptPassword } from '../../_common/utils/crypto.utils';
 import { Users } from '../../../prisma-outputs/postgres-client';
 

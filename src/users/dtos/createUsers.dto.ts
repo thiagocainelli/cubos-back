@@ -1,4 +1,3 @@
-import { IsUrlPropertyDecorator } from '../../_common/decorators/dtoProperties/isUrl-property.decorator';
 import { IsEnumPropertyDecorator } from '../../_common/decorators/dtoProperties/isEnum-property.decorator';
 import { IsEmailPropertyDecorator } from '../../_common/decorators/dtoProperties/isEmail-property.decorator';
 import { IsStringPropertyDecorator } from '../../_common/decorators/dtoProperties/isString-property.decorator';

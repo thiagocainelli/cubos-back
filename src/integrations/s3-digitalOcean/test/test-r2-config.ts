@@ -1,5 +1,5 @@
 // test-r2-config.ts
-import { s3ClientCloudflareR2Constant } from '../constants/s3-r2.constant';
+import { s3ClientCloudflareR2Constant } from '@/integrations/s3-digitalOcean/constants/s3-r2.constant';
 
 // test-r2-config.ts
 async function testR2Config() {

@@ -1,13 +1,8 @@
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { HttpException } from '@/common/exceptions/httpException';
 
-// Exceptions
-import { HttpException } from '../../_common/exceptions/httpException';
-
-/**
- * Função auxiliar para extrair mensagens de erro recursivamente
- */
 const extractValidationErrors = (errors: any[]): string[] => {
   const messages: string[] = [];
 

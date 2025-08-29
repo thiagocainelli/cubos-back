@@ -1,15 +1,8 @@
-// HttpException
 import { HttpException } from '../../_common/exceptions/httpException';
 import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
-
-// Prisma
 import prisma from '../../_core/prisma.pg';
-
-// DTO
 import { ReadUsersDto } from '../dtos/readUsers.dto';
 import { CreateUsersDto } from '../dtos/createUsers.dto';
-
-// Utils
 import { encryptPassword } from '../../_common/utils/crypto.utils';
 
 export const createUsersService = async (

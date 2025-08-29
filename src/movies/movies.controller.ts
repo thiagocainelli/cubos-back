@@ -7,8 +7,25 @@ export const listMovies = async (_req: Request, _res: Response): Promise<void> =
   const search = _req.query.search as string;
   const situation = _req.query.situation as string;
   const genre = _req.query.genre as string;
+  const startDuration = Number(_req.query.startDuration || 0);
+  const endDuration = Number(_req.query.endDuration || 0);
+  const releaseStart = _req.query.releaseStart;
+  const releaseEnd = _req.query.releaseEnd;
 
-  const response = await MoviesService.list(page, itemsPerPage, search, situation, genre);
+  const releaseDateStart = releaseStart ? new Date(releaseStart as string) : undefined;
+  const releaseDateEnd = releaseEnd ? new Date(releaseEnd as string) : undefined;
+
+  const response = await MoviesService.list(
+    page,
+    itemsPerPage,
+    search,
+    situation,
+    genre,
+    startDuration,
+    endDuration,
+    releaseDateStart,
+    releaseDateEnd,
+  );
 
   _res.json(response);
 };
@@ -41,13 +58,4 @@ export const deleteMovies = async (_req: Request, _res: Response) => {
   const response = await MoviesService.delete(movieUuid);
 
   _res.status(200).json(response);
-};
-
-export const updateMovieRating = async (_req: Request, _res: Response) => {
-  const movieUuid = _req.query.uuid as string;
-  const updateRatingDto = _req.body;
-
-  const response = await MoviesService.updateRating(movieUuid, updateRatingDto);
-
-  _res.json(response);
 };

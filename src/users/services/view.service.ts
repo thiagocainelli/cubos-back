@@ -1,11 +1,6 @@
-// Prisma
 import prisma from '../../_core/prisma.pg';
-
-// HttpException
 import { HttpException } from '../../_common/exceptions/httpException';
 import { handlePrismaError } from '../../_common/exceptions/prismaErrorHandler';
-
-// DTOs
 import { ReadUsersDto } from '../dtos/readUsers.dto';
 import { isUUID } from 'class-validator';
 

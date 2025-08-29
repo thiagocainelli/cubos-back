@@ -1,5 +1,5 @@
-import app from './app';
 import { initModules } from './_init/init.service';
+import app from './app';
 
 const PORT = process.env.PORT || 8080;
 

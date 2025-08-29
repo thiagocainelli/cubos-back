@@ -35,7 +35,7 @@ export const uploadFileCloudflareR2Service = async (
       contentDisposition = 'inline';
     }
 
-    const key = `${path}/${filename}`;
+    const key = path ? `${path}/${filename}` : `general/${filename}`;
 
     const params: any = {
       Bucket: r2Bucket,
