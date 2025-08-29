@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { StorageService } from './storage.service';
 
 export const createStorage = async (_req: Request, _res: Response) => {
-  const usersReq = _req.usersReq;
   const createStorageDto = _req.body;
   const file = _req.file;
 

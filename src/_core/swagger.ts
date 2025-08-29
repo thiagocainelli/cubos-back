@@ -6,9 +6,9 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Cubos | Backend Express',
+      title: 'Cubos Tecnologia | Backend Teste',
       version: '1.0.0',
-      description: 'Cubos | Backend Express',
+      description: 'Cubos | Backend Teste',
     },
     components: {
       securitySchemes: {

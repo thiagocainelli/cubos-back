@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import express from 'express';
 
-console.log('🚀 Iniciando aplicação...');
+console.log('🚀 Starting application...');
 
 // Swagger
 import { setupSwagger } from './_core/swagger';

@@ -21,7 +21,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/v1/movies:
+ * /api/v1/movies/list:
  *   get:
  *     summary: Listar filmes
  *     tags: [Movies]
@@ -71,11 +71,11 @@ const router = Router();
  *                 pagination:
  *                   $ref: '#/components/schemas/PaginationDto'
  */
-router.get('/', authenticateJWT, listMovies);
+router.get('/list', authenticateJWT, listMovies);
 
 /**
  * @swagger
- * /api/v1/movies:
+ * /api/v1/movies/create:
  *   post:
  *     summary: Criar novo filme
  *     tags: [Movies]
@@ -95,11 +95,11 @@ router.get('/', authenticateJWT, listMovies);
  *             schema:
  *               $ref: '#/components/schemas/ReadMoviesDto'
  */
-router.post('/', authenticateJWT, validationMiddleware(CreateMoviesDto), createMovies);
+router.post('/create', authenticateJWT, validationMiddleware(CreateMoviesDto), createMovies);
 
 /**
  * @swagger
- * /api/v1/movies/update:
+ * /api/v1/movies/update/{uuid}:
  *   put:
  *     summary: Atualizar filme
  *     tags: [Movies]
@@ -131,7 +131,7 @@ router.put('/update', authenticateJWT, validationMiddleware(UpdateMoviesDto), up
 
 /**
  * @swagger
- * /api/v1/movies/view:
+ * /api/v1/movies/view-by-uuid/{uuid}:
  *   get:
  *     summary: Visualizar filme específico
  *     tags: [Movies]
@@ -153,11 +153,11 @@ router.put('/update', authenticateJWT, validationMiddleware(UpdateMoviesDto), up
  *             schema:
  *               $ref: '#/components/schemas/ReadMoviesDto'
  */
-router.get('/view', authenticateJWT, viewMovies);
+router.get('/view-by-uuid', authenticateJWT, viewMovies);
 
 /**
  * @swagger
- * /api/v1/movies:
+ * /api/v1/movies/delete/{uuid}:
  *   delete:
  *     summary: Deletar filme
  *     tags: [Movies]
@@ -175,11 +175,11 @@ router.get('/view', authenticateJWT, viewMovies);
  *       200:
  *         description: Filme deletado com sucesso
  */
-router.delete('/', authenticateJWT, deleteMovies);
+router.delete('/delete', authenticateJWT, deleteMovies);
 
 /**
  * @swagger
- * /api/v1/movies/update-rating:
+ * /api/v1/movies/update-rating/{uuid}:
  *   put:
  *     summary: Atualizar avaliação do filme
  *     tags: [Movies]

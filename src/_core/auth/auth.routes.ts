@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { validationMiddleware } from '../middlewares/validation.middleware';
-import { login, refreshToken, verifyToken } from './auth.controller';
+import { login, refreshToken, register, verifyToken } from './auth.controller';
 
 import { LoginDto } from './dtos/login.dto';
 import { authenticateJWT } from '../middlewares/auth.middleware';
 import { RefreshTokenAuthDto } from './dtos/refresh-token-auth.dto';
+import { RegisterDto } from './dtos/register.dto';
 
 const router = Router();
 
@@ -37,6 +38,39 @@ const router = Router();
  *               $ref: '#/components/schemas/ReadLoginResponseDto'
  */
 router.post('/login', validationMiddleware(LoginDto), login);
+
+/**
+ * @swagger
+ * /api/v1/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     security: [] # Remove JWT requirement for register
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterDto'
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ReadUsersDto'
+ *       400:
+ *         description: User already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Usuário já existente no sistema. Por favor, tente outro email."
+ */
+router.post('/register', validationMiddleware(RegisterDto), register);
 
 /**
  * @swagger

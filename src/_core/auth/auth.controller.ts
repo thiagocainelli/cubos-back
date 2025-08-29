@@ -36,3 +36,10 @@ export const refreshToken = async (_req: Request, _res: Response): Promise<void>
 
   _res.status(201).json(response);
 };
+
+export const register = async (_req: Request, _res: Response) => {
+  const registerDto = _req.body;
+  const response = await AuthService.register(registerDto);
+
+  _res.status(201).json(response);
+};

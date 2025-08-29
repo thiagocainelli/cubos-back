@@ -7,10 +7,10 @@ async function bootstrap() {
   try {
     await initModules();
     app.listen(PORT, () => {
-      console.info(`🚀 Server is running on port ${PORT}`);
+      console.info(`🚀 Application is running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('❌ Error during system initialization:', error);
+    console.error('❌ Error during application initialization:', error);
     process.exit(1);
   }
 }

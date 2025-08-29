@@ -1,38 +1,33 @@
-import { IsUrlPropertyDecorator } from '../../_common/decorators/dtoProperties/isUrl-property.decorator';
-import { IsEnumPropertyDecorator } from '../../_common/decorators/dtoProperties/isEnum-property.decorator';
-import { IsEmailPropertyDecorator } from '../../_common/decorators/dtoProperties/isEmail-property.decorator';
-import { IsStringPropertyDecorator } from '../../_common/decorators/dtoProperties/isString-property.decorator';
-
-import { UserTypeEnum } from '../enum/userType.enum';
+import { IsEmailPropertyDecorator } from '../../../_common/decorators/dtoProperties/isEmail-property.decorator';
+import { IsStringPropertyDecorator } from '../../../_common/decorators/dtoProperties/isString-property.decorator';
 
 /**
  * @swagger
  * components:
  *   schemas:
- *     UpdateUsersDto:
+ *     RegisterDto:
  *       type: object
  *       required:
  *         - name
  *         - email
+ *         - password
  *       properties:
  *         name:
  *           type: string
  *           description: User name
  *           example: "John Doe"
- *           required: true
  *         email:
  *           type: string
  *           format: email
  *           description: User email
  *           example: "john.doe@example.com"
- *           required: true
  *         password:
  *           type: string
- *           description: User password
- *           example: "Exemplo@123"
- *           required: false
+ *           format: password
+ *           description: User password (minimum 6 characters)
+ *           example: "Teste@123"
  */
-export class UpdateUsersDto {
+export class RegisterDto {
   @IsStringPropertyDecorator({
     description: 'User name',
     example: 'John Doe',
@@ -48,9 +43,9 @@ export class UpdateUsersDto {
   email!: string;
 
   @IsStringPropertyDecorator({
-    description: 'User password',
-    example: 'Exemplo@123',
-    required: false,
+    description: 'User password (minimum 6 characters)',
+    example: 'password123',
+    required: true,
   })
   password!: string;
 }
