@@ -1,5 +1,5 @@
-import { IsEmailPropertyDecorator } from '@/common/decorators/dtoProperties/isEmail-property.decorator';
-import { IsStringPropertyDecorator } from '@/common/decorators/dtoProperties/isString-property.decorator';
+import { IsEmailPropertyDecorator } from '../../../_common/decorators/dtoProperties/isEmail-property.decorator';
+import { IsStringPropertyDecorator } from '../../../_common/decorators/dtoProperties/isString-property.decorator';
 
 /**
  * @swagger

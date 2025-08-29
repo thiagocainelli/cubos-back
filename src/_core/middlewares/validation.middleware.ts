@@ -1,7 +1,7 @@
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { HttpException } from '@/common/exceptions/httpException';
+import { HttpException } from '../../_common/exceptions/httpException';
 
 const extractValidationErrors = (errors: any[]): string[] => {
   const messages: string[] = [];

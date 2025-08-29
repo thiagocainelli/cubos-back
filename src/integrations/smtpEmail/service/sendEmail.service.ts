@@ -1,38 +1,37 @@
 import { CreateEmailResponseSuccess, Resend } from 'resend';
 
 export const sendEmailService = async (
-  recipient: string,
+  recipient: string | string[],
   subject: string,
   content: string,
 ): Promise<CreateEmailResponseSuccess | null> => {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const emailSender = process.env.RESEND_EMAIL_SENDER;
+
+  if (!resendApiKey || !emailSender) {
+    console.error('❌ RESEND_API_KEY ou RESEND_EMAIL_SENDER ausentes.');
+    return null;
+  }
+
+  const resend = new Resend(resendApiKey);
+
   try {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    const emailSender = process.env.EMAIL_SENDER;
-    const resend = new Resend(resendApiKey);
-
-    if (!resendApiKey || !emailSender) {
-      throw new Error(
-        'Configurações de envio de email não encontradas. Contacte o administrador do sistema.',
-      );
-    }
-
-    const emailOptions = {
+    const { data, error } = await resend.emails.send({
       from: emailSender,
-      to: recipient,
-      subject: subject,
+      to: Array.isArray(recipient) ? recipient : [recipient],
+      subject,
       html: content,
-    };
+    });
 
-    const response = await resend.emails.send(emailOptions);
-
-    return response.data;
-  } catch (error: any) {
-    if (error && error.message) {
-      return error.message;
-    } else {
-      throw new Error(
-        'Configurações de envio de email não encontradas. Contacte o administrador do sistema.',
-      );
+    if (error) {
+      console.error('❌ Resend retornou erro:', JSON.stringify(error, null, 2));
+      return null;
     }
+
+    console.log('✅ Resend aceitou o envio. ID:', data?.id);
+    return data ?? null;
+  } catch (err: any) {
+    console.error('❌ Erro de transporte/SDK ao enviar:', err?.message ?? err);
+    return null;
   }
 };

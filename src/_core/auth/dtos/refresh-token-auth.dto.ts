@@ -1,4 +1,4 @@
-import { IsJWTPropertyDecorator } from '@/common/decorators/dtoProperties/isJWT-property.decorator';
+import { IsJWTPropertyDecorator } from '../../../_common/decorators/dtoProperties/isJWT-property.decorator';
 
 /**
  * @swagger

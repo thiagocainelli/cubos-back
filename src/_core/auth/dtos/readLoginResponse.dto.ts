@@ -1,7 +1,7 @@
-import { IsObjectPropertyDecorator } from '@/common/decorators/dtoProperties/isObject-property.decorator';
-import { IsStringPropertyDecorator } from '@/common/decorators/dtoProperties/isString-property.decorator';
+import { IsObjectPropertyDecorator } from '../../../_common/decorators/dtoProperties/isObject-property.decorator';
+import { IsStringPropertyDecorator } from '../../../_common/decorators/dtoProperties/isString-property.decorator';
 
-import { ReadUsersDto } from '@/users/dtos/readUsers.dto';
+import { ReadUsersDto } from '../../../users/dtos/readUsers.dto';
 
 /**
  * @swagger

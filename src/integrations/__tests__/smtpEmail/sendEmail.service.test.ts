@@ -47,7 +47,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockResolvedValue({ data: mockResponse });
 
@@ -77,7 +77,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       delete process.env.RESEND_API_KEY;
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       // Act & Assert
       const result = await sendEmailService(recipient, subject, content);
@@ -98,7 +98,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      delete process.env.EMAIL_SENDER;
+      delete process.env.RESEND_EMAIL_SENDER;
 
       // Act & Assert
       const result = await sendEmailService(recipient, subject, content);
@@ -120,7 +120,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockRejectedValue(emailError);
 
@@ -144,7 +144,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockRejectedValue(emailError);
 
@@ -166,7 +166,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockRejectedValue(null);
 
@@ -188,7 +188,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@email.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@email.com';
 
       mockEmails.send.mockRejectedValue(undefined);
 
@@ -212,7 +212,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockResolvedValue({ data: { id: 'email-123' } });
 
@@ -241,7 +241,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockResolvedValue({ data: { id: 'email-123' } });
 
@@ -270,7 +270,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockResolvedValue({ data: { id: 'email-123' } });
 
@@ -306,7 +306,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockResolvedValue({ data: { id: 'email-123' } });
 
@@ -342,7 +342,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = 'test-api-key';
-      process.env.EMAIL_SENDER = 'sender@example.com';
+      process.env.RESEND_EMAIL_SENDER = 'sender@example.com';
 
       mockEmails.send.mockResolvedValue({ data: { id: 'email-123' } });
 
@@ -373,7 +373,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = '';
-      process.env.EMAIL_SENDER = '';
+      process.env.RESEND_EMAIL_SENDER = '';
 
       // Act & Assert
       const result = await sendEmailService(recipient, subject, content);
@@ -394,7 +394,7 @@ describe('SendEmailService', () => {
       // Mock das variáveis de ambiente
       const originalEnv = process.env;
       process.env.RESEND_API_KEY = '  test-api-key  ';
-      process.env.EMAIL_SENDER = '  sender@example.com  ';
+      process.env.RESEND_EMAIL_SENDER = '  sender@example.com  ';
 
       mockEmails.send.mockResolvedValue({ data: { id: 'email-123' } });
 
